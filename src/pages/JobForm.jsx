@@ -161,7 +161,7 @@ export default function JobForm() {
   if (!reg) {
     const state = session?.registration?.status;
     return (
-      <PageShell title="Post a teaching job" subtitle="Only verified institutions can post jobs. It is free.">
+      <PageShell title="Post a teaching job" subtitle="Posting is free. Only verified institutions can post jobs, and registering is free too.">
         <Panel>
           <div className="text-center py-6 space-y-4">
             <Lock className="w-12 h-12 text-slate-400 mx-auto" />

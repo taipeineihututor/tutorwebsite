@@ -179,7 +179,7 @@ export default function TeacherForm() {
   return (
     <PageShell
       title="Create your teacher profile"
-      subtitle="Takes about 3 minutes. Schools will see your profile once we've checked it."
+      subtitle="Free, and it takes about 3 minutes. Schools will see your profile once we've checked it."
     >
       <div ref={top} />
       <Panel>

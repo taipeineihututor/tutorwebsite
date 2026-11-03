@@ -222,7 +222,7 @@ export default function Home() {
         <div className="max-w-5xl mx-auto text-center relative z-10">
           <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-white border border-white text-emerald-700 text-xs font-semibold mb-6 shadow-inner">
             <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
-            <span>Teaching jobs & teacher profiles in Taiwan</span>
+            <span>Free teaching jobs & teacher profiles in Taiwan</span>
           </div>
 
           <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-white mb-10 leading-tight">
@@ -232,19 +232,19 @@ export default function Home() {
 
           <div className="grid sm:grid-cols-2 gap-4 max-w-3xl mx-auto text-left">
             <a href="#/join" className="group rounded-2xl p-6 bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-lg shadow-emerald-500/20 transition">
-              <p className="text-xs font-bold uppercase tracking-wider opacity-70">For teachers</p>
+              <p className="text-xs font-bold uppercase tracking-wider opacity-70">For teachers · 100% free</p>
               <p className="text-2xl font-black mt-1">Create my profile</p>
               <p className="text-sm font-medium mt-1 opacity-80">Photo, visa status, availability – about 3 minutes.</p>
             </a>
             <a href="#/post-job" className="group rounded-2xl p-6 bg-white hover:bg-slate-50 border border-white text-slate-900 shadow-lg shadow-black/20 transition">
-              <p className="text-xs font-bold uppercase tracking-wider text-emerald-700">For schools</p>
+              <p className="text-xs font-bold uppercase tracking-wider text-emerald-700">For schools · 100% free</p>
               <p className="text-2xl font-black mt-1">Post a job</p>
               <p className="text-sm font-medium mt-1 text-slate-600">Describe the role and say if you can offer a Work Permit (support ARC).</p>
             </a>
           </div>
 
           <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-sm font-medium text-slate-300 mt-10">
-            {['Free to post', 'Every post is reviewed before it goes live', 'Work Permit (ARC) support shown up front', 'Teacher contact details stay private'].map((t) => (
+            {['Free for teachers and schools', 'Every post is reviewed before it goes live', 'Work Permit (ARC) support shown up front', 'Contact details shared only with verified schools'].map((t) => (
               <div key={t} className="flex items-center space-x-2 bg-white text-slate-800 px-4 py-2 rounded-xl border border-white shadow-md shadow-black/10">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                 <span>{t}</span>
