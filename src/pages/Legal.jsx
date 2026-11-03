@@ -81,7 +81,8 @@ export default function Legal() {
         <P>
           Institutions (schools, kindergartens, cram schools, universities, companies and so on) must register and be
           verified by us before they can post a job or see any teacher’s contact details. We check the name, the Taiwan
-          business tax ID and a document such as a business registration or school permit. Each institution can have up to
+          business tax ID and at least one credential: a document such as a business registration or school permit, an
+          email address on the institution’s own domain, or another verifiable credential. A license is not required. Each institution can have up to
           3 active job posts (live or waiting for review) at a time and can close a post whenever it likes.
         </P>
         <P>
@@ -112,7 +113,7 @@ export default function Legal() {
         <H3>What we collect</H3>
         <UL items={[
           'Teachers: name, email, phone or LINE (optional), whether you agree to share them with verified institutions, nationality, education, certificates, experience, an introduction, a photo (optional), a link to an intro video (optional), whether you are in Taiwan, visa and stay-until date, whether you need ARC sponsorship, where you want to work, and when you are available (including any hours you list for each day).',
-          'Institutions: name, type, Taiwan business tax ID, address, website (optional), the name, job title and phone of the person responsible, the login email, a proof document (for example a business registration or school permit) that only our admin can open, and a note of which teachers’ contact details they viewed. When they post a job: contact name and email, an application link (optional), a logo (optional), up to 3 school locations (address and optional Google Maps link), and the job details.',
+          'Institutions: name, type, Taiwan business tax ID, address, website (optional), the name, job title and phone of the person responsible, the login email, at least one way to verify the institution (a document such as a business registration or school permit, an email address on the institution’s own domain, or another credential or link), which only our admin can see, and a note of which teachers’ contact details they viewed. When they post a job: contact name and email, an application link (optional), a logo (optional), up to 3 school locations (address and optional Google Maps link), and the job details.',
           'Messages: if a school contacts a teacher through the site, we receive the sender’s name, school, email and message.',
           'Technical data: like most websites, our hosting provider sees basic information such as your IP address when you visit. When you submit a form we also keep your IP address for about 2 days, only to block spam and abuse.',
         ]} />

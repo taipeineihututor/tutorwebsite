@@ -73,6 +73,13 @@ function jobRows(j) {
   ];
 }
 
+const hostOf = (u) => { try { return new URL(/^https?:/i.test(u) ? u : `https://${u}`).hostname.replace(/^www\./, '').toLowerCase(); } catch { return ''; } };
+const emailMatchesSite = (email, site) => {
+  const d = (email.split('@')[1] || '').toLowerCase();
+  const h = hostOf(site);
+  return !!d && !!h && (h === d || h.endsWith(`.${d}`) || d.endsWith(`.${h}`));
+};
+
 function schoolRows(r) {
   return [
     ['Institution', r.institution_name],
@@ -82,6 +89,9 @@ function schoolRows(r) {
     ['City / address', [r.city, r.address].filter(Boolean).join(' – ')],
     ['Person responsible', [r.contact_name, r.contact_title].filter(Boolean).join(', ')],
     ['Login email', r.contact_email],
+    ['Official institution email', r.official_email ? `${r.official_email}${r.website && !emailMatchesSite(r.official_email, r.website) ? '   ⚠ domain does not match the website' : ''}` : ''],
+    ['Other credential', r.other_credential],
+    ['Proof document', r.proof_path ? 'Uploaded (use "Open proof document")' : ''],
     ['Phone', r.phone],
     ['Message', r.message],
     ['Admin note (private)', r.admin_note],
@@ -132,11 +142,19 @@ function NotePanel({ kind, item, busy, onSave, onClose }) {
   const [which, setWhich] = useState(0);
   const [text, setText] = useState(fill(list[0][1]));
   const [reject, setReject] = useState(false);
-  const to = isTeacher ? item.email : item.contact_email; // schools and jobs both use contact_email
+  const [toOfficial, setToOfficial] = useState(false);
+  const to = isSchool && toOfficial && item.official_email ? item.official_email : (isTeacher ? item.email : item.contact_email); // schools and jobs both use contact_email
 
   return (
     <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-3">
       <p className="text-sm font-bold text-slate-900">Message to {first} <span className="font-normal text-slate-500">({to})</span></p>
+      {isSchool && item.official_email && (
+        <label className="flex items-center gap-2.5 cursor-pointer select-none">
+          <input type="checkbox" checked={toOfficial} onChange={(e) => setToOfficial(e.target.checked)}
+            className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-600" />
+          <span className="text-sm font-semibold text-slate-700">Send to their official institution email instead ({item.official_email}) – a reply from it helps confirm them</span>
+        </label>
+      )}
       <select aria-label="Message type" className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm font-medium"
         value={which} onChange={(e) => { const i = Number(e.target.value); setWhich(i); setText(fill(list[i][1])); }}>
         {list.map(([label], i) => <option key={label} value={i}>{label}</option>)}

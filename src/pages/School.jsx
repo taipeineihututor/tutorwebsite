@@ -7,6 +7,8 @@ import { MAX_ACTIVE_POSTS, school } from '../lib/api';
 const emailOk = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 const linkOk = (v) => /^https?:\/\/\S+\.\S+/i.test(v);
 const MAX_PROOF_MB = 5;
+// Free / personal mail providers do not prove anything about an institution.
+const FREE_MAIL = /@(gmail|googlemail|yahoo|ymail|hotmail|outlook|live|msn|icloud|me|aol|proton|protonmail|gmx|qq|163|126|yandex|line|naver)\./i;
 
 function SignIn({ onDone }) {
   const [mode, setMode] = useState('up');
@@ -51,7 +53,7 @@ function SignIn({ onDone }) {
         <div className="grid sm:grid-cols-3 gap-3 mb-6 text-sm text-slate-700">
           {[
             ['1. Create a login', 'Use a work email address of your institution.'],
-            ['2. Tell us who you are', 'Name, tax ID and a document that proves it. Only our admin sees this.'],
+            ['2. Tell us who you are', 'Name, tax ID and any one way to verify you: a document, a school email address, or another credential. Only our admin sees this.'],
             ['3. We verify, you post', 'Usually within a day or two. Then you can post jobs (up to 3 at a time) and contact teachers.'],
           ].map(([h, t]) => (
             <div key={h} className="rounded-2xl bg-slate-50 border border-slate-200 p-4">
@@ -90,6 +92,7 @@ function RegistrationForm({ session, existing, onDone }) {
     tax_id: existing?.tax_id || '', website: existing?.website || '', city: existing?.city || '', address: existing?.address || '',
     contact_name: existing?.contact_name || '', contact_title: existing?.contact_title || '', phone: existing?.phone || '',
     message: existing?.message || '', consent: false,
+    official_email: existing?.official_email || '', other_credential: existing?.other_credential || '',
   });
   const [proof, setProof] = useState(null);
   const [errors, setErrors] = useState({});
@@ -107,7 +110,12 @@ function RegistrationForm({ session, existing, onDone }) {
     if (f.address.trim().length < 5) e.address = 'Please enter the address of your institution.';
     if (f.contact_name.trim().length < 2) e.contact_name = 'Please enter the name of the person responsible.';
     if (f.phone.trim().length < 6) e.phone = 'Please enter a phone number we can call to verify you.';
-    if (!proof && !existing?.proof_path) e.proof = 'Please upload a document that shows your institution (see the list above).';
+    const oe = f.official_email.trim();
+    if (oe && !emailOk(oe)) e.official_email = 'Please enter a valid email address.';
+    else if (oe && FREE_MAIL.test(oe)) e.official_email = 'This looks like a personal email (Gmail, Yahoo…). Please use an address on your institution\'s own domain, e.g. name@yourschool.edu.tw.';
+    if (!proof && !existing?.proof_path && !oe && f.other_credential.trim().length < 5) {
+      e.verify = 'Please give us at least ONE way to verify your institution: a document, an email address on your institution\'s own domain, or another credential.';
+    }
     if (!f.consent) e.consent = 'Please tick the box to continue.';
     setErrors(e);
     if (Object.keys(e).length) return;
@@ -119,6 +127,8 @@ function RegistrationForm({ session, existing, onDone }) {
         website: f.website.trim() || null, city: f.city, address: f.address.trim(),
         contact_name: f.contact_name.trim(), contact_title: f.contact_title.trim() || null, phone: f.phone.trim(),
         message: f.message.trim() || null,
+        official_email: f.official_email.trim() || null,
+        other_credential: f.other_credential.trim() || null,
         contact_email: session.email,
       }, proof, existing);
       onDone();
@@ -188,16 +198,34 @@ function RegistrationForm({ session, existing, onDone }) {
         <input id="r_ph" type="tel" className={inputCls} maxLength={60} value={f.phone} onChange={(e) => set('phone', e.target.value)} />
       </Field>
 
-      <Field label="Proof of your institution" required error={errors.proof} group
-        hint="Upload ONE of: business registration (公司登記/商業登記), cram school (補習班) permit, school licence, or an official letter showing the tax ID and address. PDF, JPG or PNG, under 5 MB.">
-        <div className="flex flex-wrap items-center gap-3">
-          <label className="inline-flex items-center gap-2 cursor-pointer border border-slate-300 hover:border-emerald-600 text-slate-800 px-4 py-2.5 rounded-xl text-sm font-bold transition">
-            <FileUp className="w-4 h-4" /> {proof || existing?.proof_path ? 'Choose a different file' : 'Choose file'}
-            <input type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" className="sr-only" onChange={pickProof} />
-          </label>
-          <span className="text-sm text-slate-600">{proof ? proof.name : existing?.proof_path ? 'A file was already uploaded.' : 'No file chosen'}</span>
+      <div className={`rounded-2xl border p-4 space-y-5 ${errors.verify ? 'border-red-300 bg-red-50' : 'border-slate-200 bg-slate-50'}`}>
+        <div>
+          <p className="text-sm font-black text-slate-900">How can we verify you? <span className="text-emerald-600">*</span></p>
+          <p className="text-sm text-slate-600">Give us <strong>at least one</strong> of the three below. A license is not required. More than one makes it faster.</p>
+          {errors.verify && <p role="alert" className="mt-2 text-sm font-semibold text-red-600">{errors.verify}</p>}
         </div>
-      </Field>
+
+        <Field label="A. An email address on your institution's own domain" error={errors.official_email} htmlFor="r_oe"
+          hint="For example principal@yourschool.edu.tw. Not Gmail / Yahoo. We may write to this address to confirm you.">
+          <input id="r_oe" type="email" inputMode="email" className={inputCls} maxLength={200} value={f.official_email} onChange={(e) => set('official_email', e.target.value)} />
+        </Field>
+
+        <Field label="B. A document (optional)" error={errors.proof} group
+          hint="Business registration (公司登記/商業登記), cram school (補習班) permit, school licence, or an official letter. PDF, JPG or PNG, under 5 MB.">
+          <div className="flex flex-wrap items-center gap-3">
+            <label className="inline-flex items-center gap-2 cursor-pointer border border-slate-300 bg-white hover:border-emerald-600 text-slate-800 px-4 py-2.5 rounded-xl text-sm font-bold transition">
+              <FileUp className="w-4 h-4" /> {proof || existing?.proof_path ? 'Choose a different file' : 'Choose file'}
+              <input type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" className="sr-only" onChange={pickProof} />
+            </label>
+            <span className="text-sm text-slate-600">{proof ? proof.name : existing?.proof_path ? 'A file was already uploaded.' : 'No file chosen'}</span>
+          </div>
+        </Field>
+
+        <Field label="C. Another credential or link (optional)" htmlFor="r_oc"
+          hint="For example a link to your listing on a government or Ministry of Education page, your cram school permit number, a school accreditation, or a reference we can contact.">
+          <textarea id="r_oc" rows={2} maxLength={500} className={inputCls} value={f.other_credential} onChange={(e) => set('other_credential', e.target.value)} />
+        </Field>
+      </div>
 
       <Field label="Anything else we should know?" htmlFor="r_msg" hint="Optional.">
         <textarea id="r_msg" rows={3} maxLength={1000} className={inputCls} value={f.message} onChange={(e) => set('message', e.target.value)} />

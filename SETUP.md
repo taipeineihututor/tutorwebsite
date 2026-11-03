@@ -80,7 +80,7 @@ teacher profile or job post. The function emails the admin through Resend.
 
 ## Schools & verification (added)
 
-- Institutions sign up on `#/school` (Supabase Auth, email + password), register with their tax ID and a proof document (private bucket `school-docs`), and **you approve them in Admin → Schools**.
+- Institutions sign up on `#/school` (Supabase Auth, email + password), register with their tax ID and at least ONE verification: an official email on the institution's own domain, a document (private bucket `school-docs`), or another credential/link, and **you approve them in Admin → Schools**.
 - Keep **Authentication → Sign In / Providers → "Allow new users to sign up" ON** (schools create their own logins) and turn **"Confirm email" OFF** (the default Supabase mailer can only email your own team).
 - Only approved institutions can post jobs (max 3 pending/live at a time, enforced in the database) and reveal teacher contact details (only teachers who ticked the share box; every view is logged in `contact_views`, max 100 different teachers per day).
 - Password-reset emails need custom SMTP (a verified domain in Resend) before they will reach schools.
