@@ -223,3 +223,6 @@ create or replace view public.public_teachers as
   where status = 'approved';
 
 grant select on public.public_teachers to anon, authenticated;
+
+-- Upgrade: jobs can start ASAP (already applied to the live project).
+alter table public.jobs add column if not exists start_asap boolean not null default false;

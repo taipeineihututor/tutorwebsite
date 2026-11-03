@@ -57,7 +57,7 @@ function jobRows(j) {
     ['Job type', j.job_type],
     ['Pay', j.salary],
     ['Sponsors ARC', yesNo(j.arc_offered)],
-    ['Start date', fmtDate(j.start_date)],
+    ['Start date', j.start_asap ? 'ASAP' : fmtDate(j.start_date)],
     ['Hours', j.schedule],
     ['Description', j.description],
     ['Requirements', j.requirements],

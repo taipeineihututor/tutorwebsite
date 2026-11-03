@@ -101,7 +101,7 @@ function JobCard({ job, defaultOpen = false }) {
           )}
           <dl className="grid sm:grid-cols-2 gap-x-6 gap-y-1">
             {job.schedule && <div><dt className="inline font-bold text-slate-900">Hours: </dt><dd className="inline">{job.schedule}</dd></div>}
-            {job.start_date && <div><dt className="inline font-bold text-slate-900">Start date: </dt><dd className="inline">{fmtDate(job.start_date)}</dd></div>}
+            {(job.start_asap || job.start_date) && <div><dt className="inline font-bold text-slate-900">Start date: </dt><dd className="inline">{job.start_asap ? 'ASAP' : fmtDate(job.start_date)}</dd></div>}
           </dl>
           <div className="flex flex-wrap gap-3 pt-1">
             <a

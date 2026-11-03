@@ -9,7 +9,7 @@ import { submitJob } from '../lib/api';
 const initial = {
   school_name: '', school_type: '', contact_name: '', contact_email: '', apply_link: '',
   title: '', city: '', district: '', job_type: '', salary: '', arc_offered: '',
-  start_date: '', schedule: '', description: '', requirements: '',
+  start_date: '', start_asap: false, schedule: '', description: '', requirements: '',
   consent: false, website: '',
 };
 const blankLoc = () => ({ label: '', address: '', maps_url: '' });
@@ -101,7 +101,8 @@ export default function JobForm() {
         job_type: f.job_type,
         salary: f.salary.trim(),
         arc_offered: f.arc_offered,
-        start_date: f.start_date || null,
+        start_asap: f.start_asap,
+        start_date: f.start_asap ? null : f.start_date || null,
         schedule: f.schedule.trim() || null,
         description: f.description.trim(),
         requirements: f.requirements.trim() || null,
@@ -270,8 +271,13 @@ export default function JobForm() {
 
           <div className="grid sm:grid-cols-2 gap-6">
             <Field label="Start date" htmlFor="start_date" hint="Optional">
-              <input id="start_date" type="date" className={inputCls} value={f.start_date}
-                onChange={(e) => set('start_date', e.target.value)} />
+              <input id="start_date" type="date" className={`${inputCls} disabled:opacity-50`} value={f.start_asap ? '' : f.start_date}
+                disabled={f.start_asap} onChange={(e) => set('start_date', e.target.value)} />
+              <label className="mt-2 flex items-center gap-2.5 cursor-pointer select-none">
+                <input type="checkbox" checked={f.start_asap} onChange={(e) => set('start_asap', e.target.checked)}
+                  className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-600" />
+                <span className="text-sm font-semibold text-slate-700">As soon as possible (ASAP)</span>
+              </label>
             </Field>
             <Field label="Working hours" htmlFor="schedule" hint="Optional, e.g. Mon–Fri 2–9 pm">
               <input id="schedule" className={inputCls} value={f.schedule} onChange={(e) => set('schedule', e.target.value)} />
