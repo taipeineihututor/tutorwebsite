@@ -372,7 +372,7 @@ export default function TeacherForm() {
                   availability. <strong>Never shown:</strong> your full name, email and phone.
                 </Banner>
                 <label className="flex items-start gap-3 cursor-pointer select-none">
-                  <input type="checkbox" className="mt-1 w-5 h-5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                  <input type="checkbox" className="mt-1 w-5 h-5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-600"
                     checked={f.consent} onChange={(e) => set('consent', e.target.checked)} />
                   <span className="text-sm text-slate-700">
                     I agree to show the details above to schools on this website, and I confirm the information is true.

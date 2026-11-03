@@ -1,6 +1,19 @@
 import React, { useState } from 'react';
-import { Award, Menu, X, Plus, User } from 'lucide-react';
+import { Menu, X, Plus, User } from 'lucide-react';
 import { isDemo } from '../lib/supabase';
+
+// "Formosa" = the beautiful island. The mark is a simplified outline of Taiwan on a lime tile.
+function LogoMark() {
+  return (
+    <svg viewBox="0 0 32 32" className="w-10 h-10 shrink-0" role="img" aria-label="TeachFormosa logo">
+      <rect width="32" height="32" rx="9" fill="#B8EA32" />
+      <path
+        d="M17.4 5c2.4 1.1 3.9 3.3 3.4 5.9 1.4 1.7.9 4.4-.3 6.3-.7 2.7-2.3 5.5-4.1 8.3-1.5-2.1-3-5-4-8-1.5-2-1-4.6.6-6.2-.1-2.7 1.6-5.3 4.4-6.3z"
+        fill="#0A2A21"
+      />
+    </svg>
+  );
+}
 
 const links = [
   { href: '#/', label: 'Browse Jobs', match: (r) => r === '/' },
@@ -15,25 +28,23 @@ export default function Layout({ route, children }) {
       : 'text-slate-300 hover:text-white px-4 py-2 transition';
 
   return (
-    <div className="min-h-screen bg-[#090d16] text-slate-100 font-sans selection:bg-emerald-500 selection:text-black flex flex-col">
+    <div className="min-h-screen bg-[#08241F] text-slate-100 font-sans selection:bg-emerald-500 selection:text-black flex flex-col">
       {isDemo && (
         <div className="bg-amber-400 text-amber-950 text-center text-sm font-semibold px-4 py-2">
           Preview mode – nothing is saved to a server yet. Connect the database to go live (see SETUP.md).
         </div>
       )}
 
-      <header className="border-b border-slate-800/60 bg-[#090d16]/90 backdrop-blur-md sticky top-0 z-50">
+      <header className="border-b border-slate-800/60 bg-[#08241F]/90 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
           <a href="#/" className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
-              <Award className="w-6 h-6 text-slate-950" />
-            </div>
+            <LogoMark />
             <div>
-              <span className="text-lg sm:text-xl font-black tracking-tight text-white block leading-none">
-                TEACHER HUNTER <span className="text-emerald-400">TAIWAN</span>
+              <span className="font-display text-2xl font-extrabold tracking-tight text-white block leading-none">
+                Teach<span className="text-emerald-400">Formosa</span>
               </span>
-              <span className="hidden sm:block text-[10px] font-medium tracking-widest text-slate-400 uppercase mt-1">
-                Teaching jobs & teacher profiles
+              <span className="hidden sm:block text-[10px] font-semibold tracking-widest text-slate-400 uppercase mt-1.5">
+                Teaching jobs in Taiwan
               </span>
             </div>
           </a>
@@ -87,7 +98,7 @@ export default function Layout({ route, children }) {
       <main className="flex-1">{children}</main>
 
       <footer className="py-8 border-t border-slate-900 text-center text-xs text-slate-500">
-        <p>© 2026 Teacher Hunter Taiwan. All profiles and job posts are reviewed before they appear.</p>
+        <p>© 2026 TeachFormosa. All profiles and job posts are reviewed before they appear.</p>
         <p className="mt-2">
           <a href="#/admin" className="text-slate-600 hover:text-slate-300">Admin</a>
         </p>

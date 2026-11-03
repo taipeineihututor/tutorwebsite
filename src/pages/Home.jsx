@@ -7,7 +7,7 @@ import { CITIES, SCHOOL_TYPES, fmtDate } from '../lib/constants';
 import { Banner } from '../components/ui';
 
 const selectCls =
-  'w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white appearance-none transition';
+  'w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:bg-white appearance-none transition';
 
 function JobCard({ job }) {
   const [open, setOpen] = useState(false);
@@ -116,7 +116,7 @@ export default function Home() {
   return (
     <>
       {/* Hero */}
-      <section className="relative pt-12 pb-14 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-[#090d16] via-[#0f172a] to-[#090d16] overflow-hidden">
+      <section className="relative pt-12 pb-14 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-[#08241F] via-[#0C2E28] to-[#08241F] overflow-hidden">
         <div className="max-w-5xl mx-auto text-center relative z-10">
           <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-slate-800/80 border border-slate-700 text-emerald-400 text-xs font-semibold mb-6 shadow-inner">
             <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
@@ -125,7 +125,7 @@ export default function Home() {
 
           <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-white mb-6 leading-tight">
             Teach English & Launch Your Adventure <br className="hidden sm:inline" />
-            in <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400">Taiwan</span>
+            in <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-emerald-200">Taiwan</span>
           </h1>
 
           <p className="text-lg text-slate-300 max-w-2xl mx-auto mb-10 leading-relaxed">
@@ -168,7 +168,7 @@ export default function Home() {
                   <Search className="absolute left-3.5 top-3 w-4 h-4 text-slate-400" />
                   <input id="q" type="text" placeholder="Title, school, city..." value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition" />
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:bg-white transition" />
                 </div>
               </div>
 
@@ -210,7 +210,7 @@ export default function Home() {
             <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
               <label className="flex items-center space-x-2 cursor-pointer select-none">
                 <input type="checkbox" checked={arcOnly} onChange={(e) => setArcOnly(e.target.checked)}
-                  className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500" />
+                  className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-600" />
                 <span className="text-sm font-semibold text-slate-700">Show ARC & Work Permit Provided Only</span>
               </label>
               <div className="flex items-center space-x-4 text-sm">

@@ -1,4 +1,4 @@
--- Teacher Hunter Taiwan: database schema
+-- TeachFormosa: database schema
 -- Run this whole file once in Supabase: Dashboard -> SQL Editor -> New query -> paste -> Run.
 -- It is safe to read top to bottom; comments explain each part.
 

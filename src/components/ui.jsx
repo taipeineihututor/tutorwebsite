@@ -2,7 +2,7 @@ import React from 'react';
 import { Check, AlertCircle } from 'lucide-react';
 
 export const inputCls =
-  'w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-base text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition';
+  'w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-base text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:bg-white transition';
 
 export function Field({ label, required, hint, error, group, children, htmlFor }) {
   const Label = group ? 'div' : 'label';
@@ -129,7 +129,7 @@ export function Panel({ children, className = '' }) {
 
 export function PageShell({ title, subtitle, children }) {
   return (
-    <section className="px-4 sm:px-6 lg:px-8 py-10 sm:py-14 bg-gradient-to-b from-[#0f172a] to-[#090d16]">
+    <section className="px-4 sm:px-6 lg:px-8 py-10 sm:py-14 bg-gradient-to-b from-[#0C2E28] to-[#08241F]">
       <div className="max-w-3xl mx-auto">
         <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-white mb-3">{title}</h1>
         {subtitle && <p className="text-slate-300 text-lg mb-8 leading-relaxed">{subtitle}</p>}

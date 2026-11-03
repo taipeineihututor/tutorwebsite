@@ -7,7 +7,7 @@ import {
 import { AvailabilityMini, Banner, Field, inputCls, PrimaryButton, SecondaryButton } from '../components/ui';
 
 const selectCls =
-  'w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition';
+  'w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:bg-white transition';
 
 const arcText = { yes: 'Needs ARC sponsorship', no: 'Can already work legally', unsure: 'ARC sponsorship: not sure yet' };
 
@@ -191,7 +191,7 @@ export default function Teachers() {
   );
 
   return (
-    <section className="px-4 sm:px-6 lg:px-8 py-10 sm:py-14 bg-gradient-to-b from-[#0f172a] to-[#090d16]">
+    <section className="px-4 sm:px-6 lg:px-8 py-10 sm:py-14 bg-gradient-to-b from-[#0C2E28] to-[#08241F]">
       <div className="max-w-5xl mx-auto">
         <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-white mb-2">Find teachers</h1>
         <p className="text-slate-300 text-lg mb-8">Every profile has been reviewed. Contact details stay private – we'll forward your message.</p>
