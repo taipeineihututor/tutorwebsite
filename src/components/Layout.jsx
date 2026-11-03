@@ -62,11 +62,11 @@ export default function Layout({ route, children }) {
 
           <div className="hidden md:flex items-center space-x-3">
             <a
-              href="#/post-job"
+              href="#/school"
               className="flex items-center space-x-2 border border-slate-700 hover:border-emerald-500 text-slate-200 px-4 py-2.5 rounded-xl text-sm font-semibold transition"
             >
               <Plus className="w-4 h-4 text-emerald-400" />
-              <span>Post a Job</span>
+              <span>Schools: post a job</span>
             </a>
             <a
               href="#/join"
@@ -93,7 +93,7 @@ export default function Layout({ route, children }) {
             <a href="#/" className="px-3 py-3 rounded-lg text-slate-100 font-semibold bg-slate-900">Browse Jobs</a>
             <a href="#/teachers" className="px-3 py-3 rounded-lg text-slate-100 font-semibold bg-slate-900">Find Teachers</a>
             <a href="#/join" className="px-3 py-3 rounded-lg text-slate-950 font-bold bg-emerald-500">I'm a Teacher – create my profile</a>
-            <a href="#/post-job" className="px-3 py-3 rounded-lg text-slate-100 font-semibold border border-slate-700">I'm a School – post a job</a>
+            <a href="#/school" className="px-3 py-3 rounded-lg text-slate-100 font-semibold border border-slate-700">I'm a School – log in / register</a>
           </nav>
         )}
       </header>

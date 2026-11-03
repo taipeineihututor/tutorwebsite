@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Loader2, MapPin, GraduationCap, Briefcase, Plane, ShieldCheck, X, CheckCircle2, User, Play } from 'lucide-react';
-import { listTeachers, submitInquiry } from '../lib/api';
+import { Loader2, MapPin, GraduationCap, Briefcase, Plane, ShieldCheck, X, CheckCircle2, User, Play, Lock, Eye, Mail, Phone, BadgeCheck } from 'lucide-react';
+import { listTeachers, submitInquiry, getTeacherContact, school } from '../lib/api';
 import {
   CITIES, SUBJECTS, EXPERIENCE, EDUCATION, VISA_STATUSES, VISA_SHORT, CERTIFICATES, DAYS, SLOTS, isVideoLink, normalizeCountry, fmtDate, fmtMonth, experienceLabel,
 } from '../lib/constants';
@@ -115,7 +115,64 @@ function InquiryModal({ teacher, onClose }) {
   );
 }
 
-function TeacherCard({ t, onContact }) {
+// Contact details: only verified institutions can reveal them, one teacher at a time (logged on the server).
+function ContactBox({ t, verified }) {
+  const [info, setInfo] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+  if (!t.contact_shared && !t.has_video) return null;
+
+  const reveal = async () => {
+    setBusy(true);
+    setErr('');
+    try {
+      const r = await getTeacherContact(t);
+      if (!r) setErr('This teacher has stopped sharing their contact details.');
+      else setInfo(r);
+    } catch (ex) {
+      setErr(ex?.code === 'P0001' && ex.message ? ex.message : 'Sorry, we could not load the details. Please try again.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm">
+      {info ? (
+        <div className="space-y-1.5">
+          <p className="font-bold text-slate-900 flex items-center gap-1.5"><BadgeCheck className="w-4 h-4 text-emerald-600" /> Contact details (shared with verified institutions)</p>
+          {info.email && <p className="flex items-center gap-2"><Mail className="w-4 h-4 text-emerald-600" /><a className="underline font-semibold" href={`mailto:${info.email}`}>{info.email}</a></p>}
+          {info.phone && <p className="flex items-center gap-2"><Phone className="w-4 h-4 text-emerald-600" />{info.phone}</p>}
+          {info.video_url && isVideoLink(info.video_url) && (
+            <a href={info.video_url} target="_blank" rel="noopener noreferrer nofollow"
+              className="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-xl font-bold transition">
+              <Play className="w-4 h-4 text-emerald-400" /> Watch intro video
+            </a>
+          )}
+        </div>
+      ) : verified ? (
+        <div className="flex flex-wrap items-center gap-3">
+          <button type="button" onClick={reveal} disabled={busy}
+            className="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 disabled:opacity-60 text-white px-4 py-2 rounded-xl font-bold transition">
+            {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Eye className="w-4 h-4 text-emerald-400" />} Show contact details
+          </button>
+          <span className="text-slate-600">{t.has_video ? 'Email, phone and intro video. ' : 'Email and phone. '}Each view is recorded.</span>
+        </div>
+      ) : (
+        <p className="flex items-start gap-2 text-slate-700">
+          <Lock className="w-4 h-4 text-slate-500 shrink-0 mt-0.5" />
+          <span>
+            {t.has_video ? <strong>Has an intro video. </strong> : null}
+            Email, phone{t.has_video ? ' and video' : ''} are visible to verified institutions only. <a href="#/school" className="underline font-bold text-emerald-700">Schools: register or sign in</a>
+          </span>
+        </p>
+      )}
+      {err && <p role="alert" className="mt-2 font-semibold text-red-600">{err}</p>}
+    </div>
+  );
+}
+
+function TeacherCard({ t, onContact, verified }) {
   const where = t.cities?.length ? t.cities.join(', ') : '';
   return (
     <article className="bg-white text-slate-900 border border-white rounded-2xl p-5 sm:p-6 shadow-lg shadow-black/20 hover:shadow-xl transition">
@@ -145,12 +202,7 @@ function TeacherCard({ t, onContact }) {
       </div>
 
       <p className="mt-4 text-slate-700 text-sm leading-relaxed whitespace-pre-line">{t.bio}</p>
-      {t.video_url && isVideoLink(t.video_url) && (
-        <a href={t.video_url} target="_blank" rel="noopener noreferrer nofollow"
-          className="mt-3 inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-xl text-sm font-bold transition">
-          <Play className="w-4 h-4 text-emerald-400" /> Watch intro video
-        </a>
-      )}
+      <ContactBox t={t} verified={verified} />
 
       <div className="mt-4 grid sm:grid-cols-2 gap-x-6 gap-y-2 text-sm text-slate-700">
         {t.education && <p className="flex items-center gap-2"><GraduationCap className="w-4 h-4 text-emerald-600 shrink-0" />{t.education}</p>}
@@ -207,6 +259,11 @@ export default function Teachers() {
   const [minExp, setMinExp] = useState('any');
   const [checks, setChecks] = useState({});
   const [contacting, setContacting] = useState(null);
+  const [verified, setVerified] = useState(false);
+
+  useEffect(() => {
+    school.session().then((s) => setVerified(s?.registration?.status === 'approved')).catch(() => {});
+  }, []);
 
   useEffect(() => {
     listTeachers().then(setTeachers).catch(() => {
@@ -249,7 +306,7 @@ export default function Teachers() {
         if (checks.legal && t.needs_arc !== 'no') return false;
         if (checks.needsArc && t.needs_arc !== 'yes') return false;
         if (checks.cert && !(t.certificates || []).includes('TEFL / TESOL / CELTA')) return false;
-        if (checks.video && !(t.video_url && isVideoLink(t.video_url))) return false;
+        if (checks.video && !t.has_video) return false;
         if (checks.now && !(t.available_from && t.available_from <= today && (!t.available_until || t.available_until >= today))) return false;
         if (checks.full && !(t.job_types || []).includes('Full-Time')) return false;
         if (checks.part && !(t.job_types || []).includes('Part-Time')) return false;
@@ -264,7 +321,7 @@ export default function Teachers() {
     <section className="px-4 sm:px-6 lg:px-8 py-10 sm:py-14 bg-gradient-to-b from-[#0F2263] to-[#0A1745]">
       <div className="max-w-5xl mx-auto">
         <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-white mb-2">Find teachers</h1>
-        <p className="text-slate-300 text-lg mb-8">Every profile has been reviewed. Contact details stay private – we'll forward your message.</p>
+        <p className="text-slate-300 text-lg mb-8">Every profile has been reviewed. Email, phone and intro videos are only shared with verified schools, and only if the teacher agreed.</p>
 
         <div className="bg-white text-slate-900 rounded-3xl p-6 shadow-2xl shadow-emerald-500/10 mb-8">
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -375,7 +432,7 @@ export default function Teachers() {
               )}
             </div>
           )}
-          {filtered.map((t) => <TeacherCard key={t.id} t={t} onContact={setContacting} />)}
+          {filtered.map((t) => <TeacherCard key={t.id} t={t} onContact={setContacting} verified={verified} />)}
         </div>
       </div>
 

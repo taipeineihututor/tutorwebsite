@@ -28,7 +28,8 @@ export default function Legal() {
               'Posting is free, for teachers and for schools.',
               'Every teacher profile and job post is reviewed by us before it goes live.',
               'We never sell your information, and we do not give it to third parties for advertising or marketing.',
-              "A teacher's email and phone are never shown on the site. Schools reach teachers through us.",
+              "A teacher's email, phone and intro video are never shown publicly. Only verified institutions can see them, and only if the teacher agreed.",
+              'Every school, kindergarten, cram school or company is verified by us before it can post jobs (up to 3 at a time) or see teacher contact details.',
             ].map((t) => (
               <li key={t} className="flex gap-2.5">
                 <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
@@ -76,10 +77,23 @@ export default function Legal() {
           the work permit process. Teachers should confirm their own situation with the relevant Taiwan authorities.
         </P>
 
-        <H3>5. Contacting a teacher</H3>
+        <H3>5. Verified institutions and contacting a teacher</H3>
         <P>
-          When a school uses “Contact this teacher”, the message comes to us first. We pass it on to the teacher, who
-          decides whether to reply. We do not give a school the teacher’s email or phone number.
+          Institutions (schools, kindergartens, cram schools, universities, companies and so on) must register and be
+          verified by us before they can post a job or see any teacher’s contact details. We check the name, the Taiwan
+          business tax ID and a document such as a business registration or school permit. Each institution can have up to
+          3 active job posts (live or waiting for review) at a time and can close a post whenever it likes.
+        </P>
+        <P>
+          A teacher can choose to share their email, phone number and intro video with verified institutions. If they do
+          not, nobody can see them, and a school can only use “Contact this teacher”: the message comes to us first and we
+          pass it on, and the teacher decides whether to reply. If they do, a verified institution can reveal one
+          teacher’s details at a time. Every view is recorded (which institution, which teacher, when) and the number of
+          views per day is limited.
+        </P>
+        <P>
+          Institutions agree to use teachers’ details only to offer them genuine teaching work, not to pass them on, sell
+          them, send advertising or spam. We may remove an institution’s access at any time.
         </P>
 
         <H3>6. No guarantees</H3>
@@ -97,16 +111,17 @@ export default function Legal() {
 
         <H3>What we collect</H3>
         <UL items={[
-          'Teachers: name, email, phone or LINE (optional), nationality, education, certificates, experience, an introduction, a photo (optional), a link to an intro video (optional), whether you are in Taiwan, visa and stay-until date, whether you need ARC sponsorship, where you want to work, and when you are available (including any hours you list for each day).',
-          'Schools: school name and type, contact name and email, an application link (optional), a logo (optional), up to 3 school locations (address and optional Google Maps link), and the job details.',
+          'Teachers: name, email, phone or LINE (optional), whether you agree to share them with verified institutions, nationality, education, certificates, experience, an introduction, a photo (optional), a link to an intro video (optional), whether you are in Taiwan, visa and stay-until date, whether you need ARC sponsorship, where you want to work, and when you are available (including any hours you list for each day).',
+          'Institutions: name, type, Taiwan business tax ID, address, website (optional), the name, job title and phone of the person responsible, the login email, a proof document (for example a business registration or school permit) that only our admin can open, and a note of which teachers’ contact details they viewed. When they post a job: contact name and email, an application link (optional), a logo (optional), up to 3 school locations (address and optional Google Maps link), and the job details.',
           'Messages: if a school contacts a teacher through the site, we receive the sender’s name, school, email and message.',
           'Technical data: like most websites, our hosting provider sees basic information such as your IP address when you visit. When you submit a form we also keep your IP address for about 2 days, only to block spam and abuse.',
         ]} />
 
         <H3>What is public and what is private</H3>
         <UL items={[
-          'Teacher profile, once approved, is public: first name and last initial, photo, intro video link, nationality, education, experience, introduction, visa type and stay-until date, whether you need ARC sponsorship, where you want to work, and availability.',
-          'Teacher details that are never shown: full name, email and phone or LINE. Only the site admin can see them.',
+          'Teacher profile, once approved, is public: first name and last initial, photo, nationality, education, experience, introduction, visa type and stay-until date, whether you need ARC sponsorship, where you want to work, and availability.',
+          'Teacher details that are never shown publicly: full name, email, phone or LINE and the intro video link. The site admin can see them. If the teacher ticked the box to share them, verified institutions can also see the email, phone and video link (each view is recorded). The public only sees that a teacher “has an intro video”.',
+          'Institution registration details and proof documents are visible only to the site admin.',
           'Job post, once approved, is public, including the school name, logo, locations, the contact person’s name and the contact email, so that teachers can apply.',
         ]} />
 
@@ -124,7 +139,7 @@ export default function Legal() {
         </P>
         <UL items={[
           'Vercel: hosts the website.',
-          'Supabase: stores the database and photos.',
+          'Supabase: stores the database, photos, institutions’ proof documents (private) and the logins.',
           'Resend: sends the email alerts to the site admin.',
           'Google Fonts: the site’s fonts load from Google, so Google can see your IP address when a page loads.',
           'OpenFreeMap and OpenStreetMap: the job map loads its map data from OpenFreeMap (built on OpenStreetMap), and when a school posts a job the address of each location is sent to OpenStreetMap’s free search service (Nominatim) to place it on the map.',

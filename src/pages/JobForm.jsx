@@ -1,10 +1,10 @@
-import React, { useRef, useState } from 'react';
-import { CheckCircle2, Loader2, ImagePlus, MapPin, Plus, Trash2 } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { CheckCircle2, Loader2, ImagePlus, MapPin, Plus, Trash2, BadgeCheck, Lock } from 'lucide-react';
 import { Field, Chips, Choice, inputCls, PrimaryButton, Panel, PageShell, Banner } from '../components/ui';
-import { CITIES, SCHOOL_TYPES, JOB_TYPES, isGoogleMapsLink } from '../lib/constants';
+import { CITIES, JOB_TYPES, isGoogleMapsLink } from '../lib/constants';
 import { resizeImage } from '../lib/image';
 import { geocodeBest } from '../lib/geocode';
-import { submitJob } from '../lib/api';
+import { submitJob, school } from '../lib/api';
 
 const initial = {
   school_name: '', school_type: '', contact_name: '', contact_email: '', apply_link: '',
@@ -26,8 +26,6 @@ function validate(f) {
     if (l.address.trim().length < 5) e[`loc${i}`] = 'Please enter the address (or remove this location).';
     else if (l.maps_url.trim() && !isGoogleMapsLink(l.maps_url)) e[`loc${i}`] = 'That does not look like a Google Maps link. Leave it empty and we will use the address.';
   });
-  if (f.school_name.trim().length < 2) e.school_name = 'Please enter the school or company name.';
-  if (!f.school_type) e.school_type = 'Please choose a school type.';
   if (f.contact_name.trim().length < 2) e.contact_name = 'Please enter a contact person.';
   if (!emailOk(f.contact_email.trim())) e.contact_email = 'Please enter a valid email address.';
   if (f.apply_link.trim() && !linkOk(f.apply_link.trim())) e.apply_link = 'Links should start with https://';
@@ -50,6 +48,17 @@ export default function JobForm() {
   const [submitError, setSubmitError] = useState('');
   const [done, setDone] = useState(false);
   const top = useRef(null);
+  const [session, setSession] = useState(undefined); // undefined = still checking
+  useEffect(() => {
+    school.session().then((s) => {
+      setSession(s);
+      const r = s?.registration;
+      if (r?.status === 'approved') {
+        setF((p) => ({ ...p, school_name: r.institution_name, school_type: r.institution_type || 'Other', contact_name: r.contact_name || '', contact_email: s.email || '' }));
+      }
+    }).catch(() => setSession(null));
+  }, []);
+  const reg = session?.registration?.status === 'approved' ? session.registration : null;
   const set = (k, v) => setF((p) => ({ ...p, [k]: v }));
   const setLoc = (i, k, v) => setF((p) => ({ ...p, locations: p.locations.map((l, n) => (n === i ? { ...l, [k]: v } : l)) }));
   const addLoc = () => setF((p) => (p.locations.length < MAX_LOCATIONS ? { ...p, locations: [...p.locations, blankLoc()] } : p));
@@ -90,6 +99,7 @@ export default function JobForm() {
         if (locations.length < f.locations.length) await new Promise((r) => setTimeout(r, 1100)); // be polite: 1 request/second
       }
       await submitJob({
+        school_id: reg.id,
         school_name: f.school_name.trim(),
         school_type: f.school_type,
         contact_name: f.contact_name.trim(),
@@ -135,8 +145,34 @@ export default function JobForm() {
               We check every post before it goes live. We may email <strong>{f.contact_email}</strong> if we need
               anything else.
             </p>
-            <a href="#/teachers" className="inline-block text-emerald-700 font-bold hover:underline">
-              Meanwhile, browse teacher profiles →
+            <p className="text-sm text-slate-500">You can close this post at any time from your school page.</p>
+            <a href="#/school" className="inline-block text-emerald-700 font-bold hover:underline">
+              Go to my posts →
+            </a>
+          </div>
+        </Panel>
+      </PageShell>
+    );
+  }
+
+  if (session === undefined) {
+    return <p className="flex items-center justify-center gap-2 text-slate-400 py-20"><Loader2 className="w-5 h-5 animate-spin" /> Loading…</p>;
+  }
+  if (!reg) {
+    const state = session?.registration?.status;
+    return (
+      <PageShell title="Post a teaching job" subtitle="Only verified institutions can post jobs. It is free.">
+        <Panel>
+          <div className="text-center py-6 space-y-4">
+            <Lock className="w-12 h-12 text-slate-400 mx-auto" />
+            <h2 className="text-2xl font-black">
+              {!session ? 'Please sign in or register your institution first' : state === 'pending' ? 'We are still checking your registration' : state === 'rejected' ? 'Your registration needs changes' : 'Please register your institution first'}
+            </h2>
+            <p className="text-slate-600 max-w-md mx-auto">
+              We verify every school, kindergarten, cram school and company, so teachers can trust the jobs they see – and so teachers can safely share their contact details.
+            </p>
+            <a href="#/school" className="inline-block bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-6 py-3 rounded-xl font-bold transition">
+              {!session ? 'Sign in / register' : 'Go to my school page'}
             </a>
           </div>
         </Panel>
@@ -145,22 +181,19 @@ export default function JobForm() {
   }
 
   return (
-    <PageShell title="Post a teaching job" subtitle="Takes about 3 minutes. Your post goes live after we've checked it.">
+    <PageShell title="Post a teaching job" subtitle="Takes about 3 minutes. Your post goes live after we've checked it. Each institution can have up to 3 active posts at a time.">
       <div ref={top} />
       <Panel>
         <div className="space-y-6">
           <h2 className="text-lg font-black text-slate-900">About your school</h2>
 
-          <Field label="School / company name" required error={errors.school_name} htmlFor="school_name">
-            <input id="school_name" className={inputCls} value={f.school_name} onChange={(e) => set('school_name', e.target.value)} />
-          </Field>
-
-          <Field label="Type of school" required error={errors.school_type} htmlFor="school_type">
-            <select id="school_type" className={inputCls} value={f.school_type} onChange={(e) => set('school_type', e.target.value)}>
-              <option value="">Choose…</option>
-              {SCHOOL_TYPES.map((o) => <option key={o}>{o}</option>)}
-            </select>
-          </Field>
+          <div className="flex items-center gap-3 rounded-2xl bg-emerald-50 border border-emerald-200 p-4">
+            <BadgeCheck className="w-7 h-7 text-emerald-600 shrink-0" />
+            <div>
+              <p className="font-black text-slate-900">{f.school_name}</p>
+              <p className="text-sm text-slate-600">{f.school_type} · verified institution. To change the name, email teachformosa@gmail.com.</p>
+            </div>
+          </div>
 
           <div className="grid sm:grid-cols-2 gap-6">
             <Field label="Contact person" required error={errors.contact_name} htmlFor="contact_name">

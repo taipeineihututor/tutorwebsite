@@ -246,3 +246,17 @@ grant select on public.public_teachers to anon, authenticated;
 -- Phase 2 (run after the website that uses public_jobs is live):
 --   drop policy if exists "public can read approved jobs" on public.jobs;
 -- ---------------------------------------------------------------------------
+
+
+-- =====================================================================
+-- VERIFIED INSTITUTIONS + 3 ACTIVE POSTS PER INSTITUTION (upgrade block)
+-- Already applied to the live project via migrations. Summary:
+--  * table public.schools (+ RLS, protect_school_fields, throttle + notify triggers), contact_email column
+--  * private storage bucket "school-docs" (folder = user id)
+--  * table public.contact_views + RPCs is_verified_school(), get_teacher_contact(uuid) (100 distinct teachers / day)
+--  * teachers.share_contact_with_schools (opt-in, default false)
+--  * public_teachers view: video_url blanked; has_video + contact_shared flags
+--  * jobs.school_id, jobs.closed_at; only an approved school may insert a job (policy "verified schools can submit a job");
+--    block_duplicate_submission() caps pending+approved, not-closed jobs at 3 per school; close_my_job(uuid) RPC
+--  * public_jobs / get_job_contact() ignore closed jobs
+-- =====================================================================

@@ -6,6 +6,7 @@ import TeacherForm from './pages/TeacherForm';
 import JobForm from './pages/JobForm';
 import Admin from './pages/Admin';
 import Legal from './pages/Legal';
+import School from './pages/School';
 import { useRoute } from './lib/router';
 
 export default function App() {
@@ -26,6 +27,9 @@ export default function App() {
     case '/terms':
     case '/privacy':
       page = <Legal />;
+      break;
+    case '/school':
+      page = <School />;
       break;
     case '/admin':
       page = <Admin />;

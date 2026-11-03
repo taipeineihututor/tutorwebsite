@@ -16,7 +16,7 @@ const initial = {
   education: '', certificates: [], experience: '', subjects: [], bio: '', video_url: '',
   in_taiwan: '', visa_status: '', stay_until: '', arrival_date: '', needs_arc: '', cities: [],
   job_types: [], available_from: '', available_until: '', availability: {}, availability_notes: {},
-  consent: false, website: '', // "website" is a hidden trap for spam bots
+  consent: false, share_contact_with_schools: false, website: '', // "website" is a hidden trap for spam bots
 };
 
 const emailOk = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
@@ -138,6 +138,7 @@ export default function TeacherForm() {
             DAYS.map((d) => [d.key, (f.availability_notes[d.key] || '').trim()]).filter(([, v]) => v),
           ),
           consent: true,
+          share_contact_with_schools: !!f.share_contact_with_schools,
         },
         photo?.blob || null,
       );
@@ -276,7 +277,7 @@ export default function TeacherForm() {
               </Field>
 
               <Field label="Intro video link" error={errors.video_url} htmlFor="video_url"
-                hint="Optional. Paste a link to a short video of you (YouTube or Google Drive). Schools can watch it on your profile. For Google Drive, set sharing to “Anyone with the link”.">
+                hint="Optional. Paste a link to a short video of you (YouTube or Google Drive). Only verified schools can open it (see the tick box at the bottom). For Google Drive, set sharing to “Anyone with the link”.">
                 <input id="video_url" type="url" inputMode="url" className={inputCls} value={f.video_url} maxLength={300}
                   placeholder="https://youtube.com/…  or  https://drive.google.com/…"
                   onChange={(e) => set('video_url', e.target.value)} />
@@ -404,15 +405,26 @@ export default function TeacherForm() {
 
               <div className="space-y-2">
                 <Banner tone="info">
-                  <strong>What schools will see:</strong> first name + last initial, photo, nationality, education,
+                  <strong>Shown to everyone:</strong> first name + last initial, photo, nationality, education,
                   experience, introduction, visa status &amp; whether you need ARC sponsorship, where you're based, and
-                  availability. <strong>Never shown:</strong> your full name, email and phone.
+                  availability. <strong>Never shown publicly:</strong> your full name, email, phone and intro video link.
                 </Banner>
+                <div className="rounded-2xl border-2 border-emerald-200 bg-emerald-50 p-4">
+                  <label className="flex items-start gap-3 cursor-pointer select-none">
+                    <input id="share_contact" type="checkbox" className="mt-1 w-5 h-5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-600"
+                      checked={f.share_contact_with_schools} onChange={(e) => set('share_contact_with_schools', e.target.checked)} />
+                    <span className="text-sm text-slate-800">
+                      <strong>Verified schools can see my email, phone and intro video.</strong> Optional. We check every institution
+                      (business registration and tax ID) before it can see these details, each view is recorded, and you can
+                      withdraw at any time by emailing teachformosa@gmail.com. If you leave this unticked, schools can only message you through us.
+                    </span>
+                  </label>
+                </div>
                 <label className="flex items-start gap-3 cursor-pointer select-none">
                   <input type="checkbox" className="mt-1 w-5 h-5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-600"
                     checked={f.consent} onChange={(e) => set('consent', e.target.checked)} />
                   <span className="text-sm text-slate-700">
-                    I agree to show the details above to schools on this website, and I confirm the information is true. I have read the <a href="#/legal" target="_blank" rel="noreferrer" className="underline font-semibold">Terms &amp; Privacy</a>.
+                    I agree to show the public details above on this website, and I confirm the information is true. I have read the <a href="#/legal" target="_blank" rel="noreferrer" className="underline font-semibold">Terms &amp; Privacy</a>.
                   </span>
                 </label>
                 {errors.consent && <p role="alert" className="text-sm font-semibold text-red-600">{errors.consent}</p>}

@@ -45,13 +45,30 @@ Deno.serve(async () => {
     .is('notified_at', null)
     .eq('status', 'pending')
     .select('id, school_name, title, city, job_type, arc_offered, contact_name');
-  if (e1 || e2) return json({ error: (e1 || e2)!.message }, 500);
+  const { data: schools, error: e3 } = await db
+    .from('schools')
+    .update({ notified_at: stamp })
+    .is('notified_at', null)
+    .eq('status', 'pending')
+    .select('id, institution_name, institution_type, tax_id, city, contact_name');
+  if (e1 || e2 || e3) return json({ error: (e1 || e2 || e3)!.message }, 500);
 
-  if (!teachers?.length && !jobs?.length) return json({ sent: 0 });
+  if (!teachers?.length && !jobs?.length && !schools?.length) return json({ sent: 0 });
 
   const parts: string[] = [];
   const subjectBits: string[] = [];
 
+  if (schools?.length) {
+    subjectBits.push(`${schools.length} school registration${schools.length > 1 ? 's' : ''}`);
+    for (const sc of schools) {
+      parts.push(
+        `<h3 style="margin:18px 0 6px">New school registration (needs verification)</h3><table>` +
+          line('Institution', sc.institution_name) + line('Type', sc.institution_type) +
+          line('Tax ID', sc.tax_id) + line('City', sc.city) + line('Contact', sc.contact_name) +
+          `</table>`,
+      );
+    }
+  }
   if (jobs?.length) {
     subjectBits.push(`${jobs.length} new job post${jobs.length > 1 ? 's' : ''}`);
     for (const j of jobs) {
@@ -81,7 +98,7 @@ Deno.serve(async () => {
     `<h2 style="margin:0 0 4px">TeachFormosa: waiting for your review</h2>` +
     parts.join('') +
     `<p style="margin-top:22px"><a href="${ADMIN_URL}" style="background:#ffce1f;color:#0a1745;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:bold">Open the admin page</a></p>` +
-    `<p style="color:#5b6785;font-size:12px">Nothing goes live until you approve it. Contact details are only visible in the admin page.</p>` +
+    `<p style="color:#5b6785;font-size:12px">Nothing goes live until you approve it. Contact details and proof documents are only visible in the admin page.</p>` +
     `</div>`;
 
   const res = await fetch('https://api.resend.com/emails', {
@@ -99,7 +116,8 @@ Deno.serve(async () => {
     // Un-claim so the next submission tries again.
     if (teachers?.length) await db.from('teachers').update({ notified_at: null }).in('id', teachers.map((t) => t.id));
     if (jobs?.length) await db.from('jobs').update({ notified_at: null }).in('id', jobs.map((j) => j.id));
+    if (schools?.length) await db.from('schools').update({ notified_at: null }).in('id', schools.map((x) => x.id));
     return json({ error: 'Email provider rejected the request', status: res.status }, 502);
   }
-  return json({ sent: (teachers?.length ?? 0) + (jobs?.length ?? 0) });
+  return json({ sent: (teachers?.length ?? 0) + (jobs?.length ?? 0) + (schools?.length ?? 0) });
 });
