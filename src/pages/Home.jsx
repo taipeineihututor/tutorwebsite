@@ -13,48 +13,48 @@ function JobCard({ job }) {
   const [open, setOpen] = useState(false);
   const place = job.district ? `${job.city} (${job.district})` : job.city;
   return (
-    <article className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 sm:p-6 hover:border-emerald-500/40 transition">
+    <article className="bg-white text-slate-900 border border-white rounded-2xl p-5 sm:p-6 shadow-lg shadow-black/20 hover:shadow-xl transition">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div>
-          <h3 className="text-lg font-black text-white">{job.title}</h3>
-          <p className="text-slate-300 font-medium">{job.school_name}</p>
+          <h3 className="text-lg font-black text-slate-900">{job.title}</h3>
+          <p className="text-slate-700 font-medium">{job.school_name}</p>
         </div>
         {job.arc_offered === 'yes' && (
-          <span className="inline-flex items-center gap-1.5 self-start bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap">
+          <span className="inline-flex items-center gap-1.5 self-start bg-emerald-50 text-emerald-900 border border-emerald-200 px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap">
             <CheckCircle2 className="w-3.5 h-3.5" /> ARC sponsorship
           </span>
         )}
       </div>
 
-      <div className="mt-3 flex flex-wrap gap-2 text-sm text-slate-300">
-        <span className="inline-flex items-center gap-1.5 bg-slate-800 px-3 py-1 rounded-lg"><MapPin className="w-3.5 h-3.5 text-emerald-400" />{place}</span>
-        <span className="inline-flex items-center gap-1.5 bg-slate-800 px-3 py-1 rounded-lg"><Briefcase className="w-3.5 h-3.5 text-emerald-400" />{job.job_type}</span>
-        {job.school_type && <span className="inline-flex items-center gap-1.5 bg-slate-800 px-3 py-1 rounded-lg"><Building2 className="w-3.5 h-3.5 text-emerald-400" />{job.school_type}</span>}
-        {job.salary && <span className="bg-slate-800 px-3 py-1 rounded-lg font-semibold text-white">{job.salary}</span>}
+      <div className="mt-3 flex flex-wrap gap-2 text-sm text-slate-700">
+        <span className="inline-flex items-center gap-1.5 bg-slate-100 px-3 py-1 rounded-lg"><MapPin className="w-3.5 h-3.5 text-emerald-600" />{place}</span>
+        <span className="inline-flex items-center gap-1.5 bg-slate-100 px-3 py-1 rounded-lg"><Briefcase className="w-3.5 h-3.5 text-emerald-600" />{job.job_type}</span>
+        {job.school_type && <span className="inline-flex items-center gap-1.5 bg-slate-100 px-3 py-1 rounded-lg"><Building2 className="w-3.5 h-3.5 text-emerald-600" />{job.school_type}</span>}
+        {job.salary && <span className="bg-slate-100 px-3 py-1 rounded-lg font-semibold text-slate-900">{job.salary}</span>}
       </div>
 
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        className="mt-4 inline-flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 text-sm font-bold"
+        className="mt-4 inline-flex items-center gap-1.5 text-emerald-700 hover:text-emerald-800 text-sm font-bold"
       >
         {open ? 'Hide details' : 'View details & how to apply'}
         <ChevronDown className={`w-4 h-4 transition ${open ? 'rotate-180' : ''}`} />
       </button>
 
       {open && (
-        <div className="mt-4 pt-4 border-t border-slate-800 space-y-4 text-slate-300 text-sm leading-relaxed">
+        <div className="mt-4 pt-4 border-t border-slate-200 space-y-4 text-slate-700 text-sm leading-relaxed">
           <p className="whitespace-pre-line">{job.description}</p>
           {job.requirements && (
             <div>
-              <h4 className="font-bold text-white mb-1">Requirements</h4>
+              <h4 className="font-bold text-slate-900 mb-1">Requirements</h4>
               <p className="whitespace-pre-line">{job.requirements}</p>
             </div>
           )}
           <dl className="grid sm:grid-cols-2 gap-x-6 gap-y-1">
-            {job.schedule && <div><dt className="inline font-bold text-white">Hours: </dt><dd className="inline">{job.schedule}</dd></div>}
-            {job.start_date && <div><dt className="inline font-bold text-white">Start date: </dt><dd className="inline">{fmtDate(job.start_date)}</dd></div>}
+            {job.schedule && <div><dt className="inline font-bold text-slate-900">Hours: </dt><dd className="inline">{job.schedule}</dd></div>}
+            {job.start_date && <div><dt className="inline font-bold text-slate-900">Start date: </dt><dd className="inline">{fmtDate(job.start_date)}</dd></div>}
           </dl>
           <div className="flex flex-wrap gap-3 pt-1">
             <a
@@ -68,7 +68,7 @@ function JobCard({ job }) {
                 href={job.apply_link}
                 target="_blank"
                 rel="noopener noreferrer nofollow"
-                className="inline-flex items-center gap-2 border border-slate-700 hover:border-emerald-500 text-slate-100 px-4 py-2.5 rounded-xl text-sm font-bold transition"
+                className="inline-flex items-center gap-2 border border-slate-300 hover:border-emerald-600 text-slate-800 px-4 py-2.5 rounded-xl text-sm font-bold transition"
               >
                 <ExternalLink className="w-4 h-4" /> Apply online
               </a>
@@ -118,8 +118,8 @@ export default function Home() {
       {/* Hero */}
       <section className="relative pt-12 pb-14 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-[#0A1745] via-[#0F2263] to-[#0A1745] overflow-hidden">
         <div className="max-w-5xl mx-auto text-center relative z-10">
-          <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-slate-800/80 border border-slate-700 text-emerald-400 text-xs font-semibold mb-6 shadow-inner">
-            <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+          <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-white border border-white text-emerald-700 text-xs font-semibold mb-6 shadow-inner">
+            <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
             <span>Teaching jobs & teacher profiles in Taiwan</span>
           </div>
 
@@ -139,17 +139,17 @@ export default function Home() {
               <p className="text-2xl font-black mt-1">Create my profile</p>
               <p className="text-sm font-medium mt-1 opacity-80">Photo, visa status, availability – about 3 minutes.</p>
             </a>
-            <a href="#/post-job" className="group rounded-2xl p-6 bg-slate-900 hover:bg-slate-800 border border-slate-700 hover:border-emerald-500 text-white transition">
-              <p className="text-xs font-bold uppercase tracking-wider text-emerald-400">For schools</p>
+            <a href="#/post-job" className="group rounded-2xl p-6 bg-white hover:bg-slate-50 border border-white text-slate-900 shadow-lg shadow-black/20 transition">
+              <p className="text-xs font-bold uppercase tracking-wider text-emerald-700">For schools</p>
               <p className="text-2xl font-black mt-1">Post a job</p>
-              <p className="text-sm font-medium mt-1 text-slate-300">Describe the role and say if you sponsor ARC.</p>
+              <p className="text-sm font-medium mt-1 text-slate-600">Describe the role and say if you sponsor ARC.</p>
             </a>
           </div>
 
           <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-sm font-medium text-slate-300 mt-10">
             {['Every post is reviewed before it goes live', 'ARC sponsorship shown up front', 'Teacher contact details stay private'].map((t) => (
-              <div key={t} className="flex items-center space-x-2 bg-slate-900/60 px-4 py-2 rounded-xl border border-slate-800">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              <div key={t} className="flex items-center space-x-2 bg-white text-slate-800 px-4 py-2 rounded-xl border border-white shadow-md shadow-black/10">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                 <span>{t}</span>
               </div>
             ))}
@@ -228,11 +228,11 @@ export default function Home() {
               <p className="flex items-center justify-center gap-2 text-slate-400 py-10"><Loader2 className="w-5 h-5 animate-spin" /> Loading jobs…</p>
             )}
             {jobs !== null && filtered.length === 0 && !loadError && (
-              <div className="text-center py-12 px-4 border border-dashed border-slate-700 rounded-2xl">
-                <p className="text-lg font-bold text-white">
+              <div className="text-center py-12 px-4 bg-white border border-white rounded-2xl shadow-lg shadow-black/20">
+                <p className="text-lg font-bold text-slate-900">
                   {jobs.length === 0 ? 'No jobs are posted yet.' : 'No jobs match your filters.'}
                 </p>
-                <p className="text-slate-400 mt-1">
+                <p className="text-slate-600 mt-1">
                   {jobs.length === 0 ? 'Are you a school? Be the first to post one.' : 'Try clearing a filter.'}
                 </p>
                 {jobs.length === 0 && (

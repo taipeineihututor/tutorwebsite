@@ -104,24 +104,24 @@ function InquiryModal({ teacher, onClose }) {
 function TeacherCard({ t, onContact }) {
   const where = t.cities?.length ? t.cities.join(', ') : '';
   return (
-    <article className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 sm:p-6 hover:border-emerald-500/40 transition">
+    <article className="bg-white text-slate-900 border border-white rounded-2xl p-5 sm:p-6 shadow-lg shadow-black/20 hover:shadow-xl transition">
       <div className="flex gap-4">
-        <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-slate-800 overflow-hidden shrink-0 flex items-center justify-center">
+        <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-slate-100 overflow-hidden shrink-0 flex items-center justify-center">
           {t.photo_url ? (
             <img src={t.photo_url} alt={`Photo of ${t.display_name}`} loading="lazy" className="w-full h-full object-cover" />
           ) : (
-            <User className="w-10 h-10 text-slate-600" />
+            <User className="w-10 h-10 text-slate-400" />
           )}
         </div>
         <div className="min-w-0">
-          <h3 className="text-lg font-black text-white">{t.display_name}</h3>
-          <p className="text-slate-300 text-sm">{t.nationality}{t.native_english === 'yes' ? ' · Native English speaker' : ''}</p>
+          <h3 className="text-lg font-black text-slate-900">{t.display_name}</h3>
+          <p className="text-slate-700 text-sm">{t.nationality}{t.native_english === 'yes' ? ' · Native English speaker' : ''}</p>
           <div className="mt-2 flex flex-wrap gap-2 text-xs font-semibold">
-            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border ${t.needs_arc === 'yes' ? 'bg-amber-500/10 text-amber-300 border-amber-500/30' : 'bg-green-500/10 text-green-300 border-green-500/30'}`}>
+            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border ${t.needs_arc === 'yes' ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-green-50 text-green-800 border-green-200'}`}>
               <ShieldCheck className="w-3.5 h-3.5" /> {arcText[t.needs_arc] || 'ARC: not specified'}
             </span>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-800 text-slate-200">
-              <Plane className="w-3.5 h-3.5 text-emerald-400" />
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 text-slate-800">
+              <Plane className="w-3.5 h-3.5 text-emerald-600" />
               {t.in_taiwan
                 ? `In Taiwan${t.visa_status ? ` · ${VISA_SHORT[t.visa_status] || ''}` : ''}${t.stay_until ? ` · until ${fmtMonth(t.stay_until)}` : ''}`
                 : `Coming from abroad${t.arrival_date ? ` · from ${fmtMonth(t.arrival_date)}` : ''}`}
@@ -130,25 +130,25 @@ function TeacherCard({ t, onContact }) {
         </div>
       </div>
 
-      <p className="mt-4 text-slate-300 text-sm leading-relaxed whitespace-pre-line">{t.bio}</p>
+      <p className="mt-4 text-slate-700 text-sm leading-relaxed whitespace-pre-line">{t.bio}</p>
 
-      <div className="mt-4 grid sm:grid-cols-2 gap-x-6 gap-y-2 text-sm text-slate-300">
-        {t.education && <p className="flex items-center gap-2"><GraduationCap className="w-4 h-4 text-emerald-400 shrink-0" />{t.education}</p>}
-        {t.experience && <p className="flex items-center gap-2"><Briefcase className="w-4 h-4 text-emerald-400 shrink-0" />{experienceLabel(t.experience)}</p>}
-        {where && <p className="flex items-center gap-2 sm:col-span-2"><MapPin className="w-4 h-4 text-emerald-400 shrink-0" />Wants to work in: {where}</p>}
+      <div className="mt-4 grid sm:grid-cols-2 gap-x-6 gap-y-2 text-sm text-slate-700">
+        {t.education && <p className="flex items-center gap-2"><GraduationCap className="w-4 h-4 text-emerald-600 shrink-0" />{t.education}</p>}
+        {t.experience && <p className="flex items-center gap-2"><Briefcase className="w-4 h-4 text-emerald-600 shrink-0" />{experienceLabel(t.experience)}</p>}
+        {where && <p className="flex items-center gap-2 sm:col-span-2"><MapPin className="w-4 h-4 text-emerald-600 shrink-0" />Wants to work in: {where}</p>}
       </div>
 
       {(t.subjects?.length > 0 || t.certificates?.length > 0) && (
         <div className="mt-3 flex flex-wrap gap-1.5">
           {[...(t.subjects || []), ...(t.certificates || []).filter((c) => c !== 'None yet')].map((s) => (
-            <span key={s} className="bg-slate-800 text-slate-200 text-xs font-medium px-2.5 py-1 rounded-full">{s}</span>
+            <span key={s} className="bg-slate-100 text-slate-700 text-xs font-medium px-2.5 py-1 rounded-full">{s}</span>
           ))}
         </div>
       )}
 
       <div className="mt-4 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
         <div className="space-y-1.5">
-          <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
+          <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
             {(t.job_types || []).join(' / ') || 'Availability'}
             {t.available_from ? ` · can start ${fmtDate(t.available_from)}` : ''}
           </p>
@@ -231,13 +231,13 @@ export default function Teachers() {
             <p className="text-sm font-semibold text-slate-400">{filtered.length} {filtered.length === 1 ? 'teacher' : 'teachers'}</p>
           )}
           {teachers !== null && filtered.length === 0 && !loadError && (
-            <div className="text-center py-12 px-4 border border-dashed border-slate-700 rounded-2xl">
-              <p className="text-lg font-bold text-white">
+            <div className="text-center py-12 px-4 bg-white border border-white rounded-2xl shadow-lg shadow-black/20">
+              <p className="text-lg font-bold text-slate-900">
                 {teachers.length === 0 ? 'No teacher profiles are live yet.' : 'No teachers match these filters.'}
               </p>
               {teachers.length === 0 && (
                 <>
-                  <p className="text-slate-400 mt-1">Are you a teacher? Create your profile.</p>
+                  <p className="text-slate-600 mt-1">Are you a teacher? Create your profile.</p>
                   <a href="#/join" className="inline-block mt-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-5 py-2.5 rounded-xl font-bold transition">Create my profile</a>
                 </>
               )}

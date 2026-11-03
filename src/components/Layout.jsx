@@ -8,8 +8,11 @@ function LogoMark() {
     <svg viewBox="0 0 32 32" className="w-10 h-10 shrink-0" role="img" aria-label="TeachFormosa logo">
       <rect width="32" height="32" rx="9" fill="#FFCE1F" />
       <path
-        d="M17.4 5c2.4 1.1 3.9 3.3 3.4 5.9 1.4 1.7.9 4.4-.3 6.3-.7 2.7-2.3 5.5-4.1 8.3-1.5-2.1-3-5-4-8-1.5-2-1-4.6.6-6.2-.1-2.7 1.6-5.3 4.4-6.3z"
+        d="M18.7 5.1 L19.9 6.2 L21.4 7.1 L20.9 8.0 L20.7 9.6 L19.2 13.5 L17.8 19.3 L16.4 21.5 L15.0 24.1 L14.7 27.0 L13.8 26.4 L13.2 24.1 L11.3 22.5 L10.6 19.9 L10.6 17.0 L10.6 15.4 L12.9 11.6 L15.0 8.3 L15.9 6.7 L17.9 5.9Z"
         fill="#0A1745"
+        stroke="#0A1745"
+        strokeWidth="0.7"
+        strokeLinejoin="round"
       />
     </svg>
   );
