@@ -149,3 +149,23 @@ export const COUNTRIES = [
   'South Africa', 'South Korea', 'Spain', 'Sweden', 'Switzerland', 'Taiwan', 'Thailand', 'Turkey', 'Ukraine',
   'United Kingdom', 'United States', 'Vietnam', 'Zimbabwe',
 ];
+
+// Teachers type their country themselves, so "USA", "American" and "United States" should count as one.
+const COUNTRY_ALIASES = {
+  usa: 'United States', us: 'United States', 'u.s.': 'United States', 'u.s.a.': 'United States', america: 'United States',
+  american: 'United States', 'united states of america': 'United States',
+  uk: 'United Kingdom', 'u.k.': 'United Kingdom', england: 'United Kingdom', britain: 'United Kingdom',
+  'great britain': 'United Kingdom', british: 'United Kingdom', scotland: 'United Kingdom', wales: 'United Kingdom',
+  canadian: 'Canada', australian: 'Australia', 'new zealander': 'New Zealand', kiwi: 'New Zealand',
+  irish: 'Ireland', 'south african': 'South Africa', filipino: 'Philippines', philippine: 'Philippines',
+  korean: 'South Korea', 'south korean': 'South Korea', korea: 'South Korea', japanese: 'Japan',
+  german: 'Germany', french: 'France', spanish: 'Spain', italian: 'Italy', indian: 'India', chinese: 'China',
+};
+export const normalizeCountry = (v) => {
+  const raw = (v || '').trim().replace(/\s+/g, ' ');
+  if (!raw) return '';
+  const key = raw.toLowerCase();
+  if (COUNTRY_ALIASES[key]) return COUNTRY_ALIASES[key];
+  const hit = COUNTRIES.find((c) => c.toLowerCase() === key);
+  return hit || raw.charAt(0).toUpperCase() + raw.slice(1);
+};

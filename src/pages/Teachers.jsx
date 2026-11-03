@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Loader2, MapPin, GraduationCap, Briefcase, Plane, ShieldCheck, X, CheckCircle2, User, Play } from 'lucide-react';
 import { listTeachers, submitInquiry } from '../lib/api';
 import {
-  CITIES, SUBJECTS, EXPERIENCE, DAYS, SLOTS, isVideoLink, VISA_SHORT, fmtDate, fmtMonth, experienceLabel,
+  CITIES, SUBJECTS, EXPERIENCE, EDUCATION, VISA_STATUSES, VISA_SHORT, CERTIFICATES, DAYS, SLOTS, isVideoLink, normalizeCountry, fmtDate, fmtMonth, experienceLabel,
 } from '../lib/constants';
 import { AvailabilityMini, Banner, Field, inputCls, PrimaryButton, SecondaryButton } from '../components/ui';
 
@@ -15,8 +15,8 @@ const CHECKS = [
   ['native', 'Native English speaker'],
   ['legal', 'Can already work legally (no ARC sponsorship needed)'],
   ['needsArc', 'Needs ARC sponsorship'],
-  ['license', 'Has a teacher license'],
-  ['cert', 'Has a teaching certificate (TEFL, TESOL, …)'],
+  ['license', 'Has a teaching license (home country)'],
+  ['cert', 'Has TEFL / TESOL / CELTA'],
   ['video', 'Has an intro video'],
   ['now', 'Available to start now'],
   ['full', 'Looking for full-time'],
@@ -199,6 +199,10 @@ export default function Teachers() {
   const [city, setCity] = useState('All Locations');
   const [country, setCountry] = useState('Any');
   const [subject, setSubject] = useState('Any');
+  const [education, setEducation] = useState('any');
+  const [visa, setVisa] = useState('any');
+  const [days, setDays] = useState([]);
+  const [slot, setSlot] = useState('any');
   const [minExp, setMinExp] = useState('any');
   const [checks, setChecks] = useState({});
   const [contacting, setContacting] = useState(null);
@@ -214,7 +218,7 @@ export default function Teachers() {
   const countries = useMemo(() => {
     const seen = new Map();
     (teachers || []).forEach((t) => {
-      const n = (t.nationality || '').trim();
+      const n = normalizeCountry(t.nationality);
       if (n && !seen.has(n.toLowerCase())) seen.set(n.toLowerCase(), n);
     });
     return [...seen.values()].sort((a, b) => a.localeCompare(b));
@@ -227,7 +231,15 @@ export default function Teachers() {
     () =>
       (teachers || []).filter((t) => {
         if (city !== 'All Locations' && !(t.cities || []).includes(city) && !(t.cities || []).includes('Other / Flexible')) return false;
-        if (country !== 'Any' && (t.nationality || '').trim().toLowerCase() !== country.toLowerCase()) return false;
+        if (country !== 'Any' && normalizeCountry(t.nationality) !== country) return false;
+        if (education !== 'any' && EDUCATION.indexOf(t.education) < EDUCATION.indexOf(education)) return false;
+        if (visa !== 'any' && !(t.in_taiwan && t.visa_status === visa)) return false;
+        if (days.length || slot !== 'any') {
+          // Free on every ticked day, and (if chosen) at that time of day.
+          const wanted = days.length ? days : DAYS.map((d) => d.key);
+          const free = (d) => (t.availability?.[d] || []).length > 0 && (slot === 'any' || (t.availability[d] || []).includes(slot));
+          if (!(days.length ? wanted.every(free) : wanted.some(free))) return false;
+        }
         if (subject !== 'Any' && !(t.subjects || []).includes(subject)) return false;
         if (minExp !== 'any' && EXP_ORDER.indexOf(t.experience) < EXP_ORDER.indexOf(minExp)) return false;
         if (checks.in && !t.in_taiwan) return false;
@@ -235,17 +247,17 @@ export default function Teachers() {
         if (checks.native && t.native_english !== 'yes') return false;
         if (checks.legal && t.needs_arc !== 'no') return false;
         if (checks.needsArc && t.needs_arc !== 'yes') return false;
-        if (checks.cert && !(t.certificates || []).some((c) => c !== 'None yet')) return false;
+        if (checks.cert && !(t.certificates || []).includes('TEFL / TESOL / CELTA')) return false;
         if (checks.video && !(t.video_url && isVideoLink(t.video_url))) return false;
         if (checks.now && !(t.available_from && t.available_from <= today)) return false;
         if (checks.full && !(t.job_types || []).includes('Full-Time')) return false;
         if (checks.part && !(t.job_types || []).includes('Part-Time')) return false;
         return true;
       }),
-    [teachers, city, country, subject, minExp, checks, today],
+    [teachers, city, country, subject, education, visa, days, slot, minExp, checks, today],
   );
 
-  const reset = () => { setCity('All Locations'); setCountry('Any'); setSubject('Any'); setMinExp('any'); setChecks({}); };
+  const reset = () => { setCity('All Locations'); setCountry('Any'); setSubject('Any'); setEducation('any'); setVisa('any'); setDays([]); setSlot('any'); setMinExp('any'); setChecks({}); };
 
   return (
     <section className="px-4 sm:px-6 lg:px-8 py-10 sm:py-14 bg-gradient-to-b from-[#0F2263] to-[#0A1745]">
@@ -282,6 +294,45 @@ export default function Teachers() {
                 <option value="any">Any</option>
                 {EXPERIENCE.slice(1).map((o) => <option key={o.value} value={o.value}>{o.label.replace(/^Under 1 year$/, 'Any experience')} or more</option>)}
               </select>
+            </div>
+          </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+            <div className="space-y-1.5">
+              <label htmlFor="f_edu" className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Education</label>
+              <select id="f_edu" className={selectCls} value={education} onChange={(e) => setEducation(e.target.value)}>
+                <option value="any">Any</option>
+                {EDUCATION.map((o) => <option key={o} value={o}>{o}{o === 'PhD' ? '' : ' or higher'}</option>)}
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <label htmlFor="f_visa" className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Visa / permit (in Taiwan)</label>
+              <select id="f_visa" className={selectCls} value={visa} onChange={(e) => setVisa(e.target.value)}>
+                <option value="any">Any</option>
+                {VISA_STATUSES.map((o) => <option key={o.value} value={o.value}>{VISA_SHORT[o.value]}</option>)}
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <label htmlFor="f_slot" className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Time of day</label>
+              <select id="f_slot" className={selectCls} value={slot} onChange={(e) => setSlot(e.target.value)}>
+                <option value="any">Any time</option>
+                {SLOTS.map((o) => <option key={o.key} value={o.key}>{o.label} ({o.hint})</option>)}
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Free on</span>
+              <div className="flex flex-wrap gap-1.5" role="group" aria-label="Days available">
+                {DAYS.map((d) => {
+                  const on = days.includes(d.key);
+                  return (
+                    <button key={d.key} type="button" aria-pressed={on}
+                      onClick={() => setDays((cur) => (on ? cur.filter((x) => x !== d.key) : [...cur, d.key]))}
+                      className={`px-2.5 py-1.5 rounded-lg border text-xs font-bold transition ${on ? 'bg-emerald-500 border-emerald-600 text-slate-950' : 'bg-slate-50 border-slate-300 text-slate-700 hover:border-emerald-600'}`}>
+                      {d.label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
