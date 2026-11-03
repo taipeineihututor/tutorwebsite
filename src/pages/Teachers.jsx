@@ -62,7 +62,7 @@ function InquiryModal({ teacher, onClose }) {
 
         {sent ? (
           <div className="text-center py-6 space-y-3">
-            <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto" />
+            <CheckCircle2 className="w-12 h-12 text-emerald-600 mx-auto" />
             <p className="font-bold text-lg">Message sent</p>
             <p className="text-slate-600">We'll pass your message on to the teacher and they can reply to you directly.</p>
             <SecondaryButton onClick={onClose}>Close</SecondaryButton>
@@ -117,7 +117,7 @@ function TeacherCard({ t, onContact }) {
           <h3 className="text-lg font-black text-white">{t.display_name}</h3>
           <p className="text-slate-300 text-sm">{t.nationality}{t.native_english === 'yes' ? ' · Native English speaker' : ''}</p>
           <div className="mt-2 flex flex-wrap gap-2 text-xs font-semibold">
-            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border ${t.needs_arc === 'yes' ? 'bg-amber-500/10 text-amber-300 border-amber-500/30' : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'}`}>
+            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border ${t.needs_arc === 'yes' ? 'bg-amber-500/10 text-amber-300 border-amber-500/30' : 'bg-green-500/10 text-green-300 border-green-500/30'}`}>
               <ShieldCheck className="w-3.5 h-3.5" /> {arcText[t.needs_arc] || 'ARC: not specified'}
             </span>
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-800 text-slate-200">
@@ -191,7 +191,7 @@ export default function Teachers() {
   );
 
   return (
-    <section className="px-4 sm:px-6 lg:px-8 py-10 sm:py-14 bg-gradient-to-b from-[#0C2E28] to-[#08241F]">
+    <section className="px-4 sm:px-6 lg:px-8 py-10 sm:py-14 bg-gradient-to-b from-[#0F2263] to-[#0A1745]">
       <div className="max-w-5xl mx-auto">
         <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-white mb-2">Find teachers</h1>
         <p className="text-slate-300 text-lg mb-8">Every profile has been reviewed. Contact details stay private – we'll forward your message.</p>

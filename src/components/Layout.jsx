@@ -2,14 +2,14 @@ import React, { useState } from 'react';
 import { Menu, X, Plus, User } from 'lucide-react';
 import { isDemo } from '../lib/supabase';
 
-// "Formosa" = the beautiful island. The mark is a simplified outline of Taiwan on a lime tile.
+// "Formosa" = the beautiful island. The mark is a simplified outline of Taiwan on a yellow tile.
 function LogoMark() {
   return (
     <svg viewBox="0 0 32 32" className="w-10 h-10 shrink-0" role="img" aria-label="TeachFormosa logo">
-      <rect width="32" height="32" rx="9" fill="#B8EA32" />
+      <rect width="32" height="32" rx="9" fill="#FFCE1F" />
       <path
         d="M17.4 5c2.4 1.1 3.9 3.3 3.4 5.9 1.4 1.7.9 4.4-.3 6.3-.7 2.7-2.3 5.5-4.1 8.3-1.5-2.1-3-5-4-8-1.5-2-1-4.6.6-6.2-.1-2.7 1.6-5.3 4.4-6.3z"
-        fill="#0A2A21"
+        fill="#0A1745"
       />
     </svg>
   );
@@ -28,14 +28,14 @@ export default function Layout({ route, children }) {
       : 'text-slate-300 hover:text-white px-4 py-2 transition';
 
   return (
-    <div className="min-h-screen bg-[#08241F] text-slate-100 font-sans selection:bg-emerald-500 selection:text-black flex flex-col">
+    <div className="min-h-screen bg-[#0A1745] text-slate-100 font-sans selection:bg-emerald-500 selection:text-black flex flex-col">
       {isDemo && (
         <div className="bg-amber-400 text-amber-950 text-center text-sm font-semibold px-4 py-2">
           Preview mode – nothing is saved to a server yet. Connect the database to go live (see SETUP.md).
         </div>
       )}
 
-      <header className="border-b border-slate-800/60 bg-[#08241F]/90 backdrop-blur-md sticky top-0 z-50">
+      <header className="border-b border-slate-800/60 bg-[#0A1745]/90 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
           <a href="#/" className="flex items-center space-x-3">
             <LogoMark />

@@ -10,37 +10,37 @@ export default {
         sans: ['"Plus Jakarta Sans"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
         display: ['"Bricolage Grotesque"', '"Plus Jakarta Sans"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
       },
-      // TeachFormosa palette. The whole site uses these two scales, so changing
-      // them here re-colours everything.
+      // TeachFormosa palette: deep blue + yellow. The whole site uses these two
+      // scales, so changing them here re-colours everything.
       colors: {
-        // Accent: lime (500 and below are bright, for buttons and highlights on dark;
-        // 600 and above are deep greens for text and selected states on white).
+        // Accent: yellow for buttons and highlights on dark blue (300-500),
+        // royal blue for selected states and text on white (600-900).
         emerald: {
-          50: '#F2FADF',
-          100: '#E4F4BE',
-          200: '#D2EE92',
-          300: '#D9F77F',
-          400: '#C9F34F',
-          500: '#B8EA32',
-          600: '#2C7A58',
-          700: '#1F5F44',
-          800: '#174A37',
-          900: '#0F3A2C',
-          950: '#0A2A21',
+          50: '#FFF9DB',
+          100: '#FFF0AD',
+          200: '#FFE680',
+          300: '#FFE36B',
+          400: '#FFD93D',
+          500: '#FFCE1F',
+          600: '#2F4FD0',
+          700: '#243FA8',
+          800: '#1B3183',
+          900: '#142468',
+          950: '#0D1A4D',
         },
-        // Neutrals with a slight forest-green tint instead of cold grey.
+        // Neutrals with a slight blue tint instead of cold grey.
         slate: {
-          50: '#F6F8F3',
-          100: '#ECF0E7',
-          200: '#DCE3D5',
-          300: '#C0CCB8',
-          400: '#8FA086',
-          500: '#667762',
-          600: '#4B5B48',
-          700: '#344434',
-          800: '#18453B',
-          900: '#0F342C',
-          950: '#08241F',
+          50: '#F5F7FC',
+          100: '#EAEFF8',
+          200: '#D8E0F0',
+          300: '#B9C6E3',
+          400: '#8797BF',
+          500: '#5E6F9A',
+          600: '#435377',
+          700: '#2E3C60',
+          800: '#1C3076',
+          900: '#122164',
+          950: '#0A1745',
         },
       },
     },

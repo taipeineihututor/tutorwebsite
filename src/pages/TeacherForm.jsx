@@ -152,7 +152,7 @@ export default function TeacherForm() {
         <div ref={top} />
         <Panel>
           <div className="text-center py-6 space-y-4">
-            <CheckCircle2 className="w-14 h-14 text-emerald-500 mx-auto" />
+            <CheckCircle2 className="w-14 h-14 text-emerald-600 mx-auto" />
             <h2 className="text-2xl font-black">Your profile has been sent for review</h2>
             <p className="text-slate-600 max-w-md mx-auto">
               We check every profile before it goes live. Once approved, schools will be able to find you. We may

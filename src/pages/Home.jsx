@@ -116,7 +116,7 @@ export default function Home() {
   return (
     <>
       {/* Hero */}
-      <section className="relative pt-12 pb-14 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-[#08241F] via-[#0C2E28] to-[#08241F] overflow-hidden">
+      <section className="relative pt-12 pb-14 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-[#0A1745] via-[#0F2263] to-[#0A1745] overflow-hidden">
         <div className="max-w-5xl mx-auto text-center relative z-10">
           <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-slate-800/80 border border-slate-700 text-emerald-400 text-xs font-semibold mb-6 shadow-inner">
             <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
