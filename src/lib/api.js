@@ -221,7 +221,7 @@ export const admin = {
 
   // Saves a private note (what we asked for / why it was rejected), optionally changing the status too.
   async saveNote(kind, id, note, status) {
-    const patch = { admin_note: note || null, ...(status ? { status } : {}) };
+    const patch = { admin_note: note || null, updated_at: new Date().toISOString(), ...(status ? { status } : {}) };
     if (isDemo) {
       const db = loadDb();
       const row = db[kind].find((r) => r.id === id);
@@ -237,11 +237,25 @@ export const admin = {
     if (isDemo) {
       const db = loadDb();
       const row = db[kind].find((r) => r.id === id);
-      if (row) row.status = status;
+      if (row) { row.status = status; row.updated_at = new Date().toISOString(); }
       saveDb(db);
       return;
     }
-    const { error } = await supabase.from(kind).update({ status }).eq('id', id);
+    const { error } = await supabase.from(kind).update({ status, updated_at: new Date().toISOString() }).eq('id', id);
+    if (error) throw error;
+  },
+
+  // "Still active": marks the post as freshly checked, so it leaves the inactive list for another 30 days.
+  async touch(kind, id) {
+    const updated_at = new Date().toISOString();
+    if (isDemo) {
+      const db = loadDb();
+      const row = db[kind].find((r) => r.id === id);
+      if (row) row.updated_at = updated_at;
+      saveDb(db);
+      return;
+    }
+    const { error } = await supabase.from(kind).update({ updated_at }).eq('id', id);
     if (error) throw error;
   },
 

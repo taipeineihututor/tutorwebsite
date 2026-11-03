@@ -145,8 +145,9 @@ export default function TeacherForm() {
       setTimeout(scrollTop, 0);
     } catch (err) {
       setSubmitError(
-        'Sorry, something went wrong and your profile was not sent. Please try again in a moment. ' +
-          (err?.message ? `(${err.message})` : ''),
+        err?.code === 'P0001' && err.message
+          ? err.message
+          : 'Sorry, something went wrong and your profile was not sent. Please try again in a moment. ' + (err?.message ? `(${err.message})` : ''),
       );
     } finally {
       setBusy(false);

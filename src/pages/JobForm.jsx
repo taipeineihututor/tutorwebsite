@@ -112,9 +112,11 @@ export default function JobForm() {
       setDone(true);
       setTimeout(() => top.current?.scrollIntoView({ behavior: 'smooth' }), 0);
     } catch (err) {
+      // P0001 = a rule of ours (duplicate or too many posts): show its plain-English message as it is.
       setSubmitError(
-        'Sorry, something went wrong and your job was not sent. Please try again in a moment. ' +
-          (err?.message ? `(${err.message})` : ''),
+        err?.code === 'P0001' && err.message
+          ? err.message
+          : 'Sorry, something went wrong and your job was not sent. Please try again in a moment. ' + (err?.message ? `(${err.message})` : ''),
       );
     } finally {
       setBusy(false);

@@ -12,6 +12,8 @@ const TABS = [
   { key: 'inquiries', label: 'Messages' },
 ];
 const STATUSES = ['pending', 'approved', 'rejected'];
+const STALE_DAYS = 30;
+const DAY_MS = 86400000;
 
 const yesNo = (v) => (v === true || v === 'yes' ? 'Yes' : v === false || v === 'no' ? 'No' : v);
 const availText = (a) =>
@@ -133,9 +135,14 @@ function NotePanel({ kind, item, busy, onSave, onClose }) {
   );
 }
 
-function Row({ kind, item, onSet, onDelete, onNote, busy }) {
+function Row({ kind, item, all, lastActive, onSet, onDelete, onNote, onTouch, busy }) {
   const [open, setOpen] = useState(false);
   const [noting, setNoting] = useState(false);
+  // Same email (teacher) or same school + title (job) elsewhere in the list = probably a repeat.
+  const norm = (v) => (v || '').trim().toLowerCase();
+  const dupes = (all || []).filter((o) => o.id !== item.id && (kind === 'teachers'
+    ? norm(o.email) === norm(item.email)
+    : norm(o.school_name) === norm(item.school_name) && norm(o.title) === norm(item.title)));
   const isTeacher = kind === 'teachers';
   const rows = (isTeacher ? teacherRows(item) : jobRows(item)).filter(([, v]) => v);
   const title = isTeacher ? item.full_name : item.title;
@@ -153,10 +160,13 @@ function Row({ kind, item, onSet, onDelete, onNote, busy }) {
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="font-black text-slate-900">{title}</h3>
             <StatusPill status={item.status} />
+            {dupes.length > 0 && <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-orange-100 text-orange-800">possible duplicate ×{dupes.length}</span>}
             {item.admin_note && <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-sky-100 text-sky-800">note saved</span>}
           </div>
           <p className="text-sm text-slate-600 break-words">{sub}</p>
-          <p className="text-xs text-slate-400 mt-0.5">Sent {new Date(item.created_at).toLocaleString()}</p>
+          <p className="text-xs text-slate-400 mt-0.5">
+            Sent {new Date(item.created_at).toLocaleString()} · Last activity {Math.floor((Date.now() - lastActive) / DAY_MS)} days ago
+          </p>
         </div>
       </div>
 
@@ -185,6 +195,9 @@ function Row({ kind, item, onSet, onDelete, onNote, busy }) {
         )}
         {item.status === 'approved' && (
           <SecondaryButton disabled={busy} onClick={() => onSet(item, 'pending')} className="!py-2 !text-sm">Take offline</SecondaryButton>
+        )}
+        {item.status !== 'rejected' && Date.now() - lastActive >= STALE_DAYS * DAY_MS && (
+          <SecondaryButton disabled={busy} onClick={() => onTouch(item)} className="!py-2 !text-sm">Still active</SecondaryButton>
         )}
         <SecondaryButton disabled={busy} onClick={() => setNoting((v) => !v)} className="!py-2 !text-sm"><MessageSquare className="w-4 h-4" /> Ask for details / explain</SecondaryButton>
         <SecondaryButton disabled={busy} onClick={() => onDelete(item)} className="!py-2 !text-sm !text-red-700 !border-red-200 hover:!border-red-500"><Trash2 className="w-4 h-4" /> Delete</SecondaryButton>
@@ -340,12 +353,25 @@ export default function Admin() {
       setBusy(false);
     }
   };
+  const touchItem = (item) => act(() => admin.touch(tab, item.id));
   const deleteItem = (item) => {
     if (window.confirm('Delete this permanently? This cannot be undone.')) act(() => admin.remove(tab, item));
   };
 
   const count = (k, s) => data[k].filter((r) => r.status === s).length;
-  const list = tab === 'inquiries' ? data.inquiries : data[tab].filter((r) => r.status === status);
+  // Last time anything happened: posted, approved/edited/noted/"still active", or (teachers) a school wrote to them.
+  const lastActive = (item) => {
+    const own = new Date(item.updated_at || item.created_at).getTime();
+    if (tab !== 'teachers') return own;
+    return data.inquiries.filter((q) => q.teacher_id === item.id).reduce((m, q) => Math.max(m, new Date(q.created_at).getTime()), own);
+  };
+  const isStale = (r) => r.status !== 'rejected' && Date.now() - lastActive(r) >= STALE_DAYS * DAY_MS;
+  const staleCount = (k) => data[k].filter(isStale).length;
+  const list = tab === 'inquiries'
+    ? data.inquiries
+    : status === 'stale'
+      ? data[tab].filter(isStale).sort((a, b) => lastActive(a) - lastActive(b))
+      : data[tab].filter((r) => r.status === status);
 
   return (
     <section className="px-4 sm:px-6 lg:px-8 py-10">
@@ -382,6 +408,10 @@ export default function Admin() {
                   {s[0].toUpperCase() + s.slice(1)} ({count(tab, s)})
                 </button>
               ))}
+              <button onClick={() => setStatus('stale')} title="Nothing has happened for 30 days or more"
+                className={`px-3.5 py-1.5 rounded-full text-sm font-semibold border transition ${status === 'stale' ? 'bg-orange-600 text-white border-orange-600' : 'bg-white text-orange-700 border-orange-300'}`}>
+                Inactive {STALE_DAYS}+ days ({staleCount(tab)})
+              </button>
             </div>
           )}
 
@@ -390,7 +420,7 @@ export default function Admin() {
 
           {!loading && list.length === 0 && (
             <p className="text-slate-500 py-8 text-center">
-              {tab === 'inquiries' ? 'No messages yet.' : `Nothing ${status} right now.`}
+              {tab === 'inquiries' ? 'No messages yet.' : (status === 'stale' ? `Nothing is inactive: everything has had activity in the last ${STALE_DAYS} days.` : `Nothing ${status} right now.`)}
             </p>
           )}
 
@@ -413,7 +443,7 @@ export default function Admin() {
                   </article>
                 ))
               : list.map((item) => (
-                  <Row key={item.id} kind={tab} item={item} busy={busy} onSet={setItemStatus} onDelete={deleteItem} onNote={sendNote} />
+                  <Row key={item.id} kind={tab} item={item} all={data[tab]} lastActive={lastActive(item)} onTouch={touchItem} busy={busy} onSet={setItemStatus} onDelete={deleteItem} onNote={sendNote} />
                 ))}
           </div>
         </Panel>
