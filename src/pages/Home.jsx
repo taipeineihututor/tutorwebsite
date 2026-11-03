@@ -177,15 +177,10 @@ export default function Home() {
             <span>Teaching jobs & teacher profiles in Taiwan</span>
           </div>
 
-          <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-white mb-6 leading-tight">
+          <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-white mb-10 leading-tight">
             Teach English & Launch Your Adventure <br className="hidden sm:inline" />
             in <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-emerald-200">Taiwan</span>
           </h1>
-
-          <p className="text-lg text-slate-300 max-w-2xl mx-auto mb-10 leading-relaxed">
-            Teachers: tell us about yourself once and let schools come to you. Schools: post a job and reach
-            teachers who are ready to work in Taiwan.
-          </p>
 
           <div className="grid sm:grid-cols-2 gap-4 max-w-3xl mx-auto text-left">
             <a href="#/join" className="group rounded-2xl p-6 bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-lg shadow-emerald-500/20 transition">
