@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Check, AlertCircle } from 'lucide-react';
 
 export const inputCls =
@@ -168,6 +168,49 @@ export function AvailabilityMini({ availability, days, slots }) {
           })}
         </div>
       ))}
+    </div>
+  );
+}
+
+// Type-ahead list that works on phones (the browser's built-in <datalist> does not show on iPhones).
+// Free text is still allowed, so a country that is not in the list can be typed.
+export function ComboInput({ id, value, onChange, options, placeholder }) {
+  const [open, setOpen] = useState(false);
+  const q = (value || '').trim().toLowerCase();
+  const matches = !q
+    ? options
+    : [...options.filter((o) => o.toLowerCase().startsWith(q)), ...options.filter((o) => !o.toLowerCase().startsWith(q) && o.toLowerCase().includes(q))];
+  const shown = matches.filter((o) => o.toLowerCase() !== q);
+  return (
+    <div className="relative">
+      <input
+        id={id}
+        role="combobox"
+        aria-expanded={open && shown.length > 0}
+        aria-controls={`${id}-list`}
+        aria-autocomplete="list"
+        autoComplete="off"
+        autoCapitalize="words"
+        className={inputCls}
+        value={value}
+        placeholder={placeholder}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setTimeout(() => setOpen(false), 120)}
+        onChange={(e) => { onChange(e.target.value); setOpen(true); }}
+        onKeyDown={(e) => { if (e.key === 'Escape') setOpen(false); }}
+      />
+      {open && shown.length > 0 && (
+        <ul id={`${id}-list`} role="listbox"
+          className="absolute z-20 left-0 right-0 mt-1 max-h-56 overflow-y-auto overscroll-contain rounded-xl border border-slate-300 bg-white shadow-xl">
+          {shown.map((o) => (
+            <li key={o} role="option" aria-selected={false}
+              onPointerDown={(e) => { e.preventDefault(); onChange(o); setOpen(false); }}
+              className="px-4 py-3 text-base text-slate-900 hover:bg-emerald-50 active:bg-emerald-100 cursor-pointer border-b border-slate-100 last:border-0">
+              {o}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Camera, CheckCircle2, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import {
-  Field, Chips, Choice, inputCls, PrimaryButton, SecondaryButton, Panel, PageShell, Banner,
+  Field, Chips, Choice, ComboInput, inputCls, PrimaryButton, SecondaryButton, Panel, PageShell, Banner,
 } from '../components/ui';
 import {
   CITIES, SUBJECTS, EDUCATION, CERTIFICATES, EXPERIENCE, VISA_STATUSES, isVideoLink, COUNTRIES, ARC_NEEDS, DAYS, SLOTS,
@@ -235,9 +235,8 @@ export default function TeacherForm() {
 
               <Field label="Country of origin (nationality / passport country)" required error={errors.nationality} htmlFor="nationality"
                 hint="Start typing and pick your country from the list.">
-                <input id="nationality" list="country-list" className={inputCls} value={f.nationality} placeholder="e.g. Canada"
-                  autoComplete="off" onChange={(e) => set('nationality', e.target.value)} />
-                <datalist id="country-list">{COUNTRIES.map((c) => <option key={c} value={c} />)}</datalist>
+                <ComboInput id="nationality" value={f.nationality} placeholder="e.g. Canada" options={COUNTRIES}
+                  onChange={(v) => set('nationality', v)} />
               </Field>
 
               <Field label="Is English your first language?" required error={errors.native_english} group>
