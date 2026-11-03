@@ -41,11 +41,10 @@ export default function JobsMap({ points, selectedId, onSelect }) {
 
   useEffect(() => {
     map.current = L.map(el.current, { scrollWheelZoom: false }).setView([23.7, 120.95], 7);
-    // CARTO's Voyager style labels places in English / Latin letters (standard OpenStreetMap tiles use Chinese).
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-      subdomains: 'abcd',
+    // Esri World Street Map: free, no key, and it labels places in English (standard OpenStreetMap tiles use Chinese).
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
       maxZoom: 19,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+      attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ, USGS, and contributors',
     }).addTo(map.current);
     layer.current = L.layerGroup().addTo(map.current);
     return () => {
