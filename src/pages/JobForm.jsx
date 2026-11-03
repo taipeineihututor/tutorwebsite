@@ -1,7 +1,8 @@
 import React, { useRef, useState } from 'react';
-import { CheckCircle2, Loader2 } from 'lucide-react';
+import { CheckCircle2, Loader2, ImagePlus, MapPin, Plus, Trash2 } from 'lucide-react';
 import { Field, Chips, Choice, inputCls, PrimaryButton, Panel, PageShell, Banner } from '../components/ui';
-import { CITIES, SCHOOL_TYPES, JOB_TYPES } from '../lib/constants';
+import { CITIES, SCHOOL_TYPES, JOB_TYPES, isGoogleMapsLink } from '../lib/constants';
+import { resizeImage } from '../lib/image';
 import { submitJob } from '../lib/api';
 
 const initial = {
@@ -10,12 +11,20 @@ const initial = {
   start_date: '', schedule: '', description: '', requirements: '',
   consent: false, website: '',
 };
+const blankLoc = () => ({ label: '', address: '', maps_url: '' });
+const MAX_LOCATIONS = 3;
 
 const emailOk = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 const linkOk = (v) => /^https?:\/\/\S+\.\S+/i.test(v);
 
 function validate(f) {
   const e = {};
+  f.locations.forEach((l, i) => {
+    const any = l.label.trim() || l.address.trim() || l.maps_url.trim();
+    if (!any) return;
+    if (l.address.trim().length < 5) e[`loc${i}`] = 'Please enter the address (or remove this location).';
+    else if (l.maps_url.trim() && !isGoogleMapsLink(l.maps_url)) e[`loc${i}`] = 'That does not look like a Google Maps link. Leave it empty and we will use the address.';
+  });
   if (f.school_name.trim().length < 2) e.school_name = 'Please enter the school or company name.';
   if (!f.school_type) e.school_type = 'Please choose a school type.';
   if (f.contact_name.trim().length < 2) e.contact_name = 'Please enter a contact person.';
@@ -32,13 +41,31 @@ function validate(f) {
 }
 
 export default function JobForm() {
-  const [f, setF] = useState(initial);
+  const [f, setF] = useState({ ...initial, locations: [blankLoc()] });
+  const [logo, setLogo] = useState(null);
+  const [logoError, setLogoError] = useState('');
   const [errors, setErrors] = useState({});
   const [busy, setBusy] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [done, setDone] = useState(false);
   const top = useRef(null);
   const set = (k, v) => setF((p) => ({ ...p, [k]: v }));
+  const setLoc = (i, k, v) => setF((p) => ({ ...p, locations: p.locations.map((l, n) => (n === i ? { ...l, [k]: v } : l)) }));
+  const addLoc = () => setF((p) => (p.locations.length < MAX_LOCATIONS ? { ...p, locations: [...p.locations, blankLoc()] } : p));
+  const removeLoc = (i) => setF((p) => ({ ...p, locations: p.locations.length > 1 ? p.locations.filter((_, n) => n !== i) : [blankLoc()] }));
+
+  const onLogo = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setLogoError('');
+    try {
+      const blob = await resizeImage(file, 500, 0.9); // never larger than 500 x 500 px
+      setLogo({ blob, preview: URL.createObjectURL(blob) });
+    } catch (err) {
+      setLogoError(err.message);
+    }
+  };
 
   const submit = async () => {
     const e = validate(f);
@@ -70,8 +97,12 @@ export default function JobForm() {
         schedule: f.schedule.trim() || null,
         description: f.description.trim(),
         requirements: f.requirements.trim() || null,
+        locations: f.locations
+          .map((l) => ({ label: l.label.trim(), address: l.address.trim(), maps_url: l.maps_url.trim() }))
+          .filter((l) => l.address)
+          .slice(0, MAX_LOCATIONS),
         consent: true,
-      });
+      }, logo?.blob || null);
       setDone(true);
       setTimeout(() => top.current?.scrollIntoView({ behavior: 'smooth' }), 0);
     } catch (err) {
@@ -135,6 +166,24 @@ export default function JobForm() {
             </Field>
           </div>
 
+          <Field label="School logo" htmlFor="logo" hint="Optional. Shown on your job post. We shrink it to fit within 500 × 500 pixels.">
+            <div className="flex items-center gap-4">
+              <div className="w-24 h-24 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 flex items-center justify-center overflow-hidden shrink-0">
+                {logo ? <img src={logo.preview} alt="Your logo" className="w-full h-full object-contain" /> : <ImagePlus className="w-7 h-7 text-slate-400" />}
+              </div>
+              <div className="space-y-2">
+                <label className="inline-block cursor-pointer border border-slate-300 hover:border-emerald-600 text-slate-800 px-4 py-2.5 rounded-xl text-sm font-bold transition">
+                  {logo ? 'Choose a different logo' : 'Upload logo'}
+                  <input id="logo" type="file" accept="image/*" className="sr-only" onChange={onLogo} />
+                </label>
+                {logo && (
+                  <button type="button" onClick={() => setLogo(null)} className="block text-sm font-semibold text-slate-500 hover:text-red-600">Remove</button>
+                )}
+              </div>
+            </div>
+            {logoError && <p role="alert" className="text-sm font-semibold text-red-600 mt-2">{logoError}</p>}
+          </Field>
+
           <Field label="Application link" error={errors.apply_link} htmlFor="apply_link"
             hint="Optional – your website or application form.">
             <input id="apply_link" type="url" inputMode="url" className={inputCls} value={f.apply_link} placeholder="https://"
@@ -160,6 +209,40 @@ export default function JobForm() {
               <input id="district" className={inputCls} value={f.district} onChange={(e) => set('district', e.target.value)} />
             </Field>
           </div>
+
+          <Field label="Where will the teacher work?" group
+            hint={`Optional. Add up to ${MAX_LOCATIONS} locations (for example your branches). Teachers can search by location and open each one in Google Maps.`}>
+            <div className="space-y-4">
+              {f.locations.map((l, i) => (
+                <div key={i} className="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-bold text-slate-900 flex items-center gap-1.5"><MapPin className="w-4 h-4 text-emerald-600" /> Location {i + 1}</p>
+                    {(f.locations.length > 1 || l.address || l.label || l.maps_url) && (
+                      <button type="button" onClick={() => removeLoc(i)} className="text-sm font-semibold text-slate-500 hover:text-red-600 inline-flex items-center gap-1">
+                        <Trash2 className="w-4 h-4" /> Remove
+                      </button>
+                    )}
+                  </div>
+                  <input aria-label={`Location ${i + 1} name`} className={inputCls} placeholder="Branch name (optional), e.g. Zhongshan branch"
+                    maxLength={80} value={l.label} onChange={(e) => setLoc(i, 'label', e.target.value)} />
+                  <input aria-label={`Location ${i + 1} address`} className={inputCls} placeholder="Address, e.g. No. 1, Zhongshan N. Rd., Taipei"
+                    maxLength={200} value={l.address} onChange={(e) => setLoc(i, 'address', e.target.value)} />
+                  <input aria-label={`Location ${i + 1} Google Maps link`} type="url" inputMode="url" className={inputCls}
+                    placeholder="Google Maps link (optional) – https://maps.app.goo.gl/…"
+                    maxLength={300} value={l.maps_url} onChange={(e) => setLoc(i, 'maps_url', e.target.value)} />
+                  {errors[`loc${i}`] && <p role="alert" className="text-sm font-semibold text-red-600">{errors[`loc${i}`]}</p>}
+                </div>
+              ))}
+              {f.locations.length < MAX_LOCATIONS && (
+                <button type="button" onClick={addLoc} className="inline-flex items-center gap-1.5 text-emerald-700 hover:text-emerald-800 text-sm font-bold">
+                  <Plus className="w-4 h-4" /> Add another location
+                </button>
+              )}
+              <p className="text-xs text-slate-500">
+                Tip: in Google Maps, open your school, tap <strong>Share</strong> and copy the link. No link? No problem, we make one from the address.
+              </p>
+            </div>
+          </Field>
 
           <Field label="Job type" required error={errors.job_type} group>
             <Chips options={JOB_TYPES} value={f.job_type} onChange={(v) => set('job_type', v)} />

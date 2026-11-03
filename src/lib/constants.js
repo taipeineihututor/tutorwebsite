@@ -115,3 +115,12 @@ export const fmtMonth = (d) => {
 };
 
 export const experienceLabel = (v) => EXPERIENCE.find((e) => e.value === v)?.label || '';
+
+// Google Maps links. A school may paste a Google Maps link; if not (or if it is not a Google
+// link) we build a search link from the address, so "Open in Google Maps" always works.
+const GOOGLE_MAPS_HOST = /^https:\/\/((www\.)?google\.[a-z.]+\/maps|maps\.google\.[a-z.]+|maps\.app\.goo\.gl|goo\.gl\/maps)/i;
+export const isGoogleMapsLink = (v) => GOOGLE_MAPS_HOST.test((v || '').trim());
+export const mapsUrl = (loc) =>
+  isGoogleMapsLink(loc?.maps_url)
+    ? loc.maps_url.trim()
+    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(loc?.address || '')}`;

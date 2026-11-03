@@ -38,6 +38,7 @@ function teacherRows(t) {
     ['Job types', (t.job_types || []).join(', ')],
     ['Can start', fmtDate(t.available_from)],
     ['Weekly availability', availText(t.availability)],
+    ['Hours by day', DAYS.filter((d) => t.availability_notes?.[d.key]).map((d) => `${d.label}: ${t.availability_notes[d.key]}`).join('\n')],
     ['Introduction', t.bio],
   ];
 }
@@ -48,6 +49,8 @@ function jobRows(j) {
     ['School type', j.school_type],
     ['Contact', `${j.contact_name} <${j.contact_email}>`],
     ['Apply link', j.apply_link],
+    ['Logo', j.logo_url],
+    ['Locations', (j.locations || []).map((l, i) => `${i + 1}. ${[l.label, l.address].filter(Boolean).join(' – ')}${l.maps_url ? ` (${l.maps_url})` : ''}`).join('\n')],
     ['City', [j.city, j.district].filter(Boolean).join(' – ')],
     ['Job type', j.job_type],
     ['Pay', j.salary],

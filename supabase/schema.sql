@@ -197,3 +197,29 @@ create policy "admins manage photos" on storage.objects
   for all to authenticated
   using (bucket_id = 'photos' and public.is_admin())
   with check (bucket_id = 'photos' and public.is_admin());
+
+-- ---------------------------------------------------------------------------
+-- Upgrade: school logos, up to 3 school locations, per-day teacher availability
+-- notes. (Already applied to the live project; safe to run again.)
+-- Logos are stored in the same "photos" bucket under logos/.
+-- ---------------------------------------------------------------------------
+alter table public.jobs
+  add column if not exists logo_url text check (char_length(logo_url) <= 500),
+  add column if not exists locations jsonb not null default '[]'::jsonb
+    check (jsonb_typeof(locations) = 'array' and jsonb_array_length(locations) <= 3 and pg_column_size(locations) <= 4000);
+
+alter table public.teachers
+  add column if not exists availability_notes jsonb not null default '{}'::jsonb
+    check (jsonb_typeof(availability_notes) = 'object' and pg_column_size(availability_notes) <= 2000);
+
+create or replace view public.public_teachers as
+  select
+    id, created_at,
+    public.display_name(full_name) as display_name,
+    nationality, native_english, education, certificates, experience, subjects,
+    bio, photo_url, cities, in_taiwan, visa_status, stay_until, arrival_date,
+    needs_arc, job_types, available_from, availability, availability_notes
+  from public.teachers
+  where status = 'approved';
+
+grant select on public.public_teachers to anon, authenticated;

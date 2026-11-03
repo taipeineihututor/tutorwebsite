@@ -113,14 +113,24 @@ export async function submitTeacher(payload, photoBlob) {
   if (error) throw error;
 }
 
-export async function submitJob(payload) {
+export async function submitJob(payload, logoBlob) {
   if (isDemo) {
     const db = loadDb();
-    db.jobs.unshift({ ...payload, id: uid(), created_at: new Date().toISOString(), status: 'pending' });
+    const logo_url = logoBlob ? await blobToDataUrl(logoBlob) : null;
+    db.jobs.unshift({ ...payload, logo_url, id: uid(), created_at: new Date().toISOString(), status: 'pending' });
     saveDb(db);
     return;
   }
-  const { error } = await supabase.from('jobs').insert({ ...payload, status: 'pending' });
+  let logo_url = null;
+  if (logoBlob) {
+    const path = `logos/${uid()}.jpg`;
+    const { error: upErr } = await supabase.storage
+      .from('photos')
+      .upload(path, logoBlob, { contentType: 'image/jpeg', cacheControl: '31536000' });
+    if (upErr) throw upErr;
+    logo_url = supabase.storage.from('photos').getPublicUrl(path).data.publicUrl;
+  }
+  const { error } = await supabase.from('jobs').insert({ ...payload, logo_url, status: 'pending' });
   if (error) throw error;
 }
 
@@ -212,8 +222,9 @@ export const admin = {
     }
     const { error } = await supabase.from(kind).delete().eq('id', row.id);
     if (error) throw error;
-    // Best effort: also delete the uploaded photo file.
-    const path = kind === 'teachers' && row.photo_url ? row.photo_url.split('/photos/')[1] : null;
+    // Best effort: also delete the uploaded photo / logo file.
+    const fileUrl = kind === 'teachers' ? row.photo_url : kind === 'jobs' ? row.logo_url : null;
+    const path = fileUrl ? fileUrl.split('/photos/')[1] : null;
     if (path) await supabase.storage.from('photos').remove([path]);
   },
 };

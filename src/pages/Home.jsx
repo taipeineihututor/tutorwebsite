@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  Search, MapPin, Building2, Briefcase, CheckCircle2, Sparkles, ChevronDown, Mail, ExternalLink, Loader2,
+  Search, MapPin, Building2, Navigation, Briefcase, CheckCircle2, Sparkles, ChevronDown, Mail, ExternalLink, Loader2,
 } from 'lucide-react';
 import { listJobs } from '../lib/api';
-import { CITIES, SCHOOL_TYPES, fmtDate } from '../lib/constants';
+import { CITIES, SCHOOL_TYPES, fmtDate, mapsUrl } from '../lib/constants';
 import { Banner } from '../components/ui';
 
 const selectCls =
@@ -15,9 +15,15 @@ function JobCard({ job }) {
   return (
     <article className="bg-white text-slate-900 border border-white rounded-2xl p-5 sm:p-6 shadow-lg shadow-black/20 hover:shadow-xl transition">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-        <div>
-          <h3 className="text-lg font-black text-slate-900">{job.title}</h3>
-          <p className="text-slate-700 font-medium">{job.school_name}</p>
+        <div className="flex items-start gap-3 min-w-0">
+          {job.logo_url && (
+            <img src={job.logo_url} alt={`${job.school_name} logo`} loading="lazy"
+              className="w-14 h-14 rounded-xl border border-slate-200 bg-white object-contain shrink-0" />
+          )}
+          <div className="min-w-0">
+            <h3 className="text-lg font-black text-slate-900">{job.title}</h3>
+            <p className="text-slate-700 font-medium">{job.school_name}</p>
+          </div>
         </div>
         {job.arc_offered === 'yes' && (
           <span className="inline-flex items-center gap-1.5 self-start bg-emerald-50 text-emerald-900 border border-emerald-200 px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap">
@@ -50,6 +56,25 @@ function JobCard({ job }) {
             <div>
               <h4 className="font-bold text-slate-900 mb-1">Requirements</h4>
               <p className="whitespace-pre-line">{job.requirements}</p>
+            </div>
+          )}
+          {(job.locations || []).length > 0 && (
+            <div>
+              <h4 className="font-bold text-slate-900 mb-1.5">{job.locations.length > 1 ? 'Locations' : 'Location'}</h4>
+              <ul className="space-y-2">
+                {job.locations.map((l, i) => (
+                  <li key={i} className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <span className="inline-flex items-center gap-1.5">
+                      <MapPin className="w-4 h-4 text-emerald-600 shrink-0" />
+                      {l.label && <strong className="text-slate-900">{l.label}: </strong>}{l.address}
+                    </span>
+                    <a href={mapsUrl(l)} target="_blank" rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-emerald-700 hover:text-emerald-800 font-bold">
+                      <Navigation className="w-3.5 h-3.5" /> Open in Google Maps
+                    </a>
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
           <dl className="grid sm:grid-cols-2 gap-x-6 gap-y-1">
@@ -99,7 +124,7 @@ export default function Home() {
   const filtered = useMemo(() => {
     const q = searchTerm.trim().toLowerCase();
     return (jobs || []).filter((j) => {
-      if (q && ![j.title, j.school_name, j.city, j.district, j.description].some((s) => (s || '').toLowerCase().includes(q))) return false;
+      if (q && ![j.title, j.school_name, j.city, j.district, j.description, ...(j.locations || []).flatMap((l) => [l.label, l.address])].some((s) => (s || '').toLowerCase().includes(q))) return false;
       if (selectedLocation !== 'All Locations' && j.city !== selectedLocation) return false;
       if (selectedSchoolType !== 'All School Types' && j.school_type !== selectedSchoolType) return false;
       if (selectedJobType !== 'Full & Part Time' && j.job_type !== selectedJobType && j.job_type !== 'Full or Part-Time') return false;
@@ -166,7 +191,7 @@ export default function Home() {
                 <label htmlFor="q" className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Search Keyword</label>
                 <div className="relative">
                   <Search className="absolute left-3.5 top-3 w-4 h-4 text-slate-400" />
-                  <input id="q" type="text" placeholder="Title, school, city..." value={searchTerm}
+                  <input id="q" type="text" placeholder="Title, school, city, street..." value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:bg-white transition" />
                 </div>

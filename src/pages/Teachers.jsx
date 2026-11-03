@@ -158,6 +158,17 @@ function TeacherCard({ t, onContact }) {
         </div>
         <PrimaryButton onClick={() => onContact(t)} className="sm:self-end">Contact this teacher</PrimaryButton>
       </div>
+
+      {DAYS.some((d) => t.availability_notes?.[d.key]) && (
+        <dl className="mt-3 text-sm text-slate-700 grid grid-cols-[3rem_1fr] gap-x-3 gap-y-0.5">
+          {DAYS.filter((d) => t.availability_notes?.[d.key]).map((d) => (
+            <React.Fragment key={d.key}>
+              <dt className="font-bold text-slate-900">{d.label}</dt>
+              <dd>{t.availability_notes[d.key]}</dd>
+            </React.Fragment>
+          ))}
+        </dl>
+      )}
     </article>
   );
 }

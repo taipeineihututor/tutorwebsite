@@ -15,7 +15,7 @@ const initial = {
   full_name: '', email: '', phone: '', nationality: '', native_english: '',
   education: '', certificates: [], experience: '', subjects: [], bio: '',
   in_taiwan: '', visa_status: '', stay_until: '', arrival_date: '', needs_arc: '', cities: [],
-  job_types: [], available_from: '', availability: {},
+  job_types: [], available_from: '', availability: {}, availability_notes: {},
   consent: false, website: '', // "website" is a hidden trap for spam bots
 };
 
@@ -130,6 +130,9 @@ export default function TeacherForm() {
           job_types: f.job_types,
           available_from: f.available_from || null,
           availability: cleanAvailability,
+          availability_notes: Object.fromEntries(
+            DAYS.map((d) => [d.key, (f.availability_notes[d.key] || '').trim()]).filter(([, v]) => v),
+          ),
           consent: true,
         },
         photo?.blob || null,
@@ -357,6 +360,20 @@ export default function TeacherForm() {
                       ))}
                     </tbody>
                   </table>
+                </div>
+              </Field>
+
+              <Field label="Exact hours for each day" group
+                hint="Optional. Add a line for each day you want to give details for, up to 7 lines. For example: 9:00–12:00 and 18:00–21:00.">
+                <div className="space-y-2">
+                  {DAYS.map((d) => (
+                    <div key={d.key} className="flex items-center gap-3">
+                      <label htmlFor={`avail_${d.key}`} className="w-12 shrink-0 text-sm font-bold text-slate-700">{d.label}</label>
+                      <input id={`avail_${d.key}`} className={inputCls} maxLength={80} placeholder="e.g. 9:00–12:00, 18:00–21:00"
+                        value={f.availability_notes[d.key] || ''}
+                        onChange={(e) => set('availability_notes', { ...f.availability_notes, [d.key]: e.target.value })} />
+                    </div>
+                  ))}
                 </div>
               </Field>
 
