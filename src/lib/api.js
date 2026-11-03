@@ -328,7 +328,7 @@ export const school = {
 
   async signUp(email, password) {
     if (isDemo) { sessionStorage.setItem(DEMO_SCHOOL_KEY, email); return { signedIn: true }; }
-    const { data, error } = await supabase.auth.signUp({ email, password });
+    const { data, error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: `${window.location.origin}/#/school` } });
     if (error) throw error;
     // If the project still asks for e-mail confirmation there is no session yet.
     return { signedIn: !!data.session };

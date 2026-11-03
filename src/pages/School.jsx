@@ -38,6 +38,7 @@ function SignIn({ onDone }) {
       const m = String(ex?.message || '');
       setErr(
         /already registered|already been registered/i.test(m) ? 'This email already has an account. Please sign in instead.'
+          : /not confirmed/i.test(m) ? 'Please confirm your email first: open the email we sent you and tap the link. If it does not work, email teachformosa@gmail.com and we will activate your login.'
           : /invalid login/i.test(m) ? 'That email or password is not right.'
           : /rate|too many/i.test(m) ? 'Too many attempts. Please wait a few minutes and try again.'
           : 'Sorry, that did not work. Please try again.',
