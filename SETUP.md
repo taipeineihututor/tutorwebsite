@@ -66,3 +66,13 @@ a photo's link works for anyone who has it, so an unapproved photo is not secret
   add a CAPTCHA such as Cloudflare Turnstile.
 - Supabase's free plan pauses a project after a week with no activity. Visiting the site or the admin
   page occasionally keeps it awake, or upgrade the plan if the site becomes busy.
+
+## Email alerts when someone posts (already set up on the live project)
+A database trigger calls the `notify-admin` edge function (`supabase/functions/notify-admin`) after every new
+teacher profile or job post. The function emails the admin through Resend.
+- Needs one secret, `RESEND_API_KEY`: Supabase -> **Edge Functions -> Secrets** (a free Resend account is enough).
+- Create the Resend account with the same email that should receive the alerts. Resend's free test sender
+  (`onboarding@resend.dev`) can only deliver to the address the account was created with.
+- `supabase/notifications.sql` contains the database part. It is already applied; it is kept here for reference
+  and for rebuilding the project.
+- Alerts never block a submission: if email fails, the visitor still succeeds, and the next submission retries.
