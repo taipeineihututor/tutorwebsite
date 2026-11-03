@@ -2,12 +2,26 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Loader2, MapPin, GraduationCap, Briefcase, Plane, ShieldCheck, X, CheckCircle2, User, Play } from 'lucide-react';
 import { listTeachers, submitInquiry } from '../lib/api';
 import {
-  CITIES, DAYS, SLOTS, isVideoLink, VISA_SHORT, fmtDate, fmtMonth, experienceLabel,
+  CITIES, SUBJECTS, EXPERIENCE, DAYS, SLOTS, isVideoLink, VISA_SHORT, fmtDate, fmtMonth, experienceLabel,
 } from '../lib/constants';
 import { AvailabilityMini, Banner, Field, inputCls, PrimaryButton, SecondaryButton } from '../components/ui';
 
 const selectCls =
   'w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:bg-white transition';
+
+const EXP_ORDER = ['0', '1', '1-2', '3-5', '6-10', '10+'];
+const CHECKS = [
+  ['in', 'In Taiwan now'],
+  ['abroad', 'Not in Taiwan yet'],
+  ['native', 'Native English speaker'],
+  ['legal', 'Can already work legally (no ARC sponsorship needed)'],
+  ['needsArc', 'Needs ARC sponsorship'],
+  ['cert', 'Has a teaching certificate (TEFL, TESOL, …)'],
+  ['video', 'Has an intro video'],
+  ['now', 'Available to start now'],
+  ['full', 'Looking for full-time'],
+  ['part', 'Looking for part-time'],
+];
 
 const arcText = { yes: 'Needs ARC sponsorship', no: 'Can already work legally', unsure: 'ARC sponsorship: not sure yet' };
 
@@ -183,8 +197,9 @@ export default function Teachers() {
   const [teachers, setTeachers] = useState(null);
   const [loadError, setLoadError] = useState('');
   const [city, setCity] = useState('All Locations');
-  const [where, setWhere] = useState('any'); // any | in | abroad
-  const [arc, setArc] = useState('any'); // any | needs | ready
+  const [subject, setSubject] = useState('Any');
+  const [minExp, setMinExp] = useState('any');
+  const [checks, setChecks] = useState({});
   const [contacting, setContacting] = useState(null);
 
   useEffect(() => {
@@ -194,18 +209,32 @@ export default function Teachers() {
     });
   }, []);
 
+  const toggle = (k) => setChecks((c) => ({ ...c, [k]: !c[k] }));
+  const today = new Date().toISOString().slice(0, 10);
+
   const filtered = useMemo(
     () =>
       (teachers || []).filter((t) => {
         if (city !== 'All Locations' && !(t.cities || []).includes(city) && !(t.cities || []).includes('Other / Flexible')) return false;
-        if (where === 'in' && !t.in_taiwan) return false;
-        if (where === 'abroad' && t.in_taiwan) return false;
-        if (arc === 'needs' && t.needs_arc !== 'yes') return false;
-        if (arc === 'ready' && t.needs_arc !== 'no') return false;
+        if (subject !== 'Any' && !(t.subjects || []).includes(subject)) return false;
+        if (minExp !== 'any' && EXP_ORDER.indexOf(t.experience) < EXP_ORDER.indexOf(minExp)) return false;
+        // Ticking both "In Taiwan" and "Not in Taiwan" means either, so only filter when exactly one is ticked.
+        if (checks.in && !checks.abroad && !t.in_taiwan) return false;
+        if (checks.abroad && !checks.in && t.in_taiwan) return false;
+        if (checks.native && t.native_english !== 'yes') return false;
+        if (checks.legal && t.needs_arc !== 'no') return false;
+        if (checks.needsArc && t.needs_arc !== 'yes') return false;
+        if (checks.cert && !(t.certificates || []).some((c) => c !== 'None yet')) return false;
+        if (checks.video && !(t.video_url && isVideoLink(t.video_url))) return false;
+        if (checks.now && !(t.available_from && t.available_from <= today)) return false;
+        if (checks.full && !(t.job_types || []).includes('Full-Time')) return false;
+        if (checks.part && !(t.job_types || []).includes('Part-Time')) return false;
         return true;
       }),
-    [teachers, city, where, arc],
+    [teachers, city, subject, minExp, checks, today],
   );
+
+  const reset = () => { setCity('All Locations'); setSubject('Any'); setMinExp('any'); setChecks({}); };
 
   return (
     <section className="px-4 sm:px-6 lg:px-8 py-10 sm:py-14 bg-gradient-to-b from-[#0F2263] to-[#0A1745]">
@@ -213,30 +242,46 @@ export default function Teachers() {
         <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-white mb-2">Find teachers</h1>
         <p className="text-slate-300 text-lg mb-8">Every profile has been reviewed. Contact details stay private – we'll forward your message.</p>
 
-        <div className="bg-white text-slate-900 rounded-3xl p-6 shadow-2xl shadow-emerald-500/10 grid sm:grid-cols-3 gap-4 mb-8">
-          <div className="space-y-1.5">
-            <label htmlFor="f_city" className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Wants to work in</label>
-            <select id="f_city" className={selectCls} value={city} onChange={(e) => setCity(e.target.value)}>
-              <option>All Locations</option>
-              {CITIES.map((c) => <option key={c}>{c}</option>)}
-            </select>
+        <div className="bg-white text-slate-900 rounded-3xl p-6 shadow-2xl shadow-emerald-500/10 mb-8">
+          <div className="grid sm:grid-cols-3 gap-4">
+            <div className="space-y-1.5">
+              <label htmlFor="f_city" className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Wants to work in</label>
+              <select id="f_city" className={selectCls} value={city} onChange={(e) => setCity(e.target.value)}>
+                <option>All Locations</option>
+                {CITIES.map((c) => <option key={c}>{c}</option>)}
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <label htmlFor="f_subject" className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Age group / subject</label>
+              <select id="f_subject" className={selectCls} value={subject} onChange={(e) => setSubject(e.target.value)}>
+                <option>Any</option>
+                {SUBJECTS.map((c) => <option key={c}>{c}</option>)}
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <label htmlFor="f_exp" className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Teaching experience</label>
+              <select id="f_exp" className={selectCls} value={minExp} onChange={(e) => setMinExp(e.target.value)}>
+                <option value="any">Any</option>
+                {EXPERIENCE.slice(1).map((o) => <option key={o.value} value={o.value}>{o.label.replace(/^Under 1 year$/, 'Any experience')} or more</option>)}
+              </select>
+            </div>
           </div>
-          <div className="space-y-1.5">
-            <label htmlFor="f_where" className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Currently</label>
-            <select id="f_where" className={selectCls} value={where} onChange={(e) => setWhere(e.target.value)}>
-              <option value="any">Anywhere</option>
-              <option value="in">Already in Taiwan</option>
-              <option value="abroad">Coming from abroad</option>
-            </select>
-          </div>
-          <div className="space-y-1.5">
-            <label htmlFor="f_arc" className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Work permit</label>
-            <select id="f_arc" className={selectCls} value={arc} onChange={(e) => setArc(e.target.value)}>
-              <option value="any">Any</option>
-              <option value="needs">Needs ARC sponsorship</option>
-              <option value="ready">Can already work legally</option>
-            </select>
-          </div>
+
+          <fieldset className="mt-5 pt-4 border-t border-slate-100">
+            <legend className="sr-only">Filter by</legend>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-3">
+              {CHECKS.map(([k, label]) => (
+                <label key={k} className="flex items-center gap-2.5 cursor-pointer select-none">
+                  <input type="checkbox" checked={!!checks[k]} onChange={() => toggle(k)}
+                    className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-600" />
+                  <span className="text-sm font-semibold text-slate-700">{label}</span>
+                </label>
+              ))}
+            </div>
+            <div className="mt-4 text-right">
+              <button type="button" onClick={reset} className="text-sm font-semibold text-slate-500 hover:text-slate-900">Reset filters</button>
+            </div>
+          </fieldset>
         </div>
 
         <div className="space-y-4">
