@@ -51,7 +51,7 @@ export function Chips({ options, value, onChange, multi = false }) {
           className={`inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full text-sm font-semibold border transition ${
             selected(o.value)
               ? 'bg-emerald-600 border-emerald-600 text-white'
-              : 'bg-white border-slate-300 text-slate-700 hover:border-emerald-500'
+              : 'bg-white border-slate-300 text-slate-700 hover:border-emerald-600'
           }`}
         >
           {selected(o.value) && <Check className="w-4 h-4" />}
@@ -78,7 +78,7 @@ export function Choice({ options, value, onChange }) {
             className={`text-left flex items-center gap-3 px-4 py-3.5 rounded-xl border text-base font-medium transition ${
               on
                 ? 'border-emerald-600 bg-emerald-50 text-emerald-900 ring-1 ring-emerald-600'
-                : 'border-slate-300 bg-white text-slate-700 hover:border-emerald-500'
+                : 'border-slate-300 bg-white text-slate-700 hover:border-emerald-600'
             }`}
           >
             <span

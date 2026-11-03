@@ -347,7 +347,7 @@ export default function TeacherForm() {
                                   aria-label={`${d.label} ${s.label}`}
                                   onClick={() => toggleSlot(d.key, s.key)}
                                   className={`w-full h-11 min-w-[2.5rem] rounded-lg border transition ${
-                                    on ? 'bg-emerald-500 border-emerald-600' : 'bg-slate-50 border-slate-300 hover:border-emerald-500'
+                                    on ? 'bg-emerald-500 border-emerald-600' : 'bg-slate-50 border-slate-300 hover:border-emerald-600'
                                   }`}
                                 />
                               </td>
