@@ -10,7 +10,7 @@
 // Needs one secret: RESEND_API_KEY (set in Supabase -> Edge Functions -> Secrets).
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
-const ADMIN_EMAIL = 'pierre.achievetaipei@gmail.com';
+const ADMIN_EMAIL = 'ehret.tw@gmail.com';
 const ADMIN_URL = 'https://tutorwebsite-pied.vercel.app/#/admin';
 // Resend's shared test sender. It can only deliver to the email address the Resend account
 // was created with, which is exactly what we need here.
