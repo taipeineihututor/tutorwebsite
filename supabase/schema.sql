@@ -77,16 +77,16 @@ create policy "admins manage teachers" on public.teachers
   using (public.is_admin()) with check (public.is_admin());
 
 -- Public display name: "Jane Smith" -> "Jane S."
-create or replace function public.display_name(full text)
+create or replace function public.display_name(person_name text)
 returns text
 language sql
 immutable
 as $$
   select case
-    when array_length(regexp_split_to_array(trim(full), '\s+'), 1) > 1 then
-      (regexp_split_to_array(trim(full), '\s+'))[1] || ' ' ||
-      upper(left((regexp_split_to_array(trim(full), '\s+'))[array_length(regexp_split_to_array(trim(full), '\s+'), 1)], 1)) || '.'
-    else trim(full)
+    when array_length(regexp_split_to_array(trim(person_name), '\s+'), 1) > 1 then
+      (regexp_split_to_array(trim(person_name), '\s+'))[1] || ' ' ||
+      upper(left((regexp_split_to_array(trim(person_name), '\s+'))[array_length(regexp_split_to_array(trim(person_name), '\s+'), 1)], 1)) || '.'
+    else trim(person_name)
   end;
 $$;
 
