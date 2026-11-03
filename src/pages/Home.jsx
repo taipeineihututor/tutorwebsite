@@ -331,7 +331,7 @@ export default function Home() {
                   <JobsMap points={points} selectedId={selectedId} onSelect={onSelect} />
                 </Suspense>
                 <p className="text-xs text-slate-500 mt-2 px-1">
-                  Yellow pins are exact addresses; white pins are placed at the city centre because the school has not given an address yet. Click a pin, then “View this ad”.
+                  Yellow pins are exact addresses; white pins are placed at the city centre because the school has not given an address yet. MRT and rail lines are shown in blue. Click a pin, then “View this ad”.
                 </p>
               </div>
             )}

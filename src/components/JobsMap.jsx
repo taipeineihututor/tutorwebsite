@@ -1,20 +1,62 @@
 import React, { useEffect, useRef } from 'react';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import maplibregl from 'maplibre-gl';
+import 'maplibre-gl/dist/maplibre-gl.css';
 
-// Plain coloured pin (no image files needed, so it works with any bundler).
-const pin = (approx) =>
-  L.divIcon({
-    className: '',
-    html: `<div style="width:26px;height:26px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:${approx ? '#ffffff' : '#FFCE1F'};border:3px solid #0A1745;box-shadow:0 2px 6px rgba(0,0,0,.45)"></div>`,
-    iconSize: [26, 26],
-    iconAnchor: [13, 26],
-    popupAnchor: [0, -24],
+// Free vector map from OpenFreeMap ("Liberty" is the Google-Maps-like style). No account or key needed.
+const STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty';
+
+// Show place names in English / Latin letters, falling back to the local name.
+const ENGLISH_NAME = ['coalesce', ['get', 'name:en'], ['get', 'name_en'], ['get', 'name:latin'], ['get', 'name']];
+
+function prepareStyle(map) {
+  const style = map.getStyle();
+  (style.layers || []).forEach((layer) => {
+    if (layer.type !== 'symbol' || !layer.layout || !layer.layout['text-field']) return;
+    if (/housenumber|shield|ref/i.test(layer.id)) return;
+    map.setLayoutProperty(layer.id, 'text-field', ENGLISH_NAME);
   });
+
+  // Make MRT / metro / rail lines and stations stand out.
+  const source = Object.keys(style.sources).find((k) => style.sources[k].type === 'vector');
+  if (!source) return;
+  try {
+    map.addLayer({
+      id: 'tf-transit-casing', type: 'line', source, 'source-layer': 'transportation',
+      filter: ['==', ['get', 'class'], 'transit'], minzoom: 9,
+      paint: { 'line-color': '#ffffff', 'line-width': ['interpolate', ['linear'], ['zoom'], 9, 2, 14, 7] },
+    });
+    map.addLayer({
+      id: 'tf-transit', type: 'line', source, 'source-layer': 'transportation',
+      filter: ['==', ['get', 'class'], 'transit'], minzoom: 9,
+      paint: { 'line-color': '#2F4FD0', 'line-width': ['interpolate', ['linear'], ['zoom'], 9, 1, 14, 4] },
+    });
+    map.addLayer({
+      id: 'tf-stations', type: 'circle', source, 'source-layer': 'poi',
+      filter: ['all', ['==', ['get', 'class'], 'railway'], ['in', ['get', 'subclass'], ['literal', ['station', 'subway', 'halt']]]],
+      minzoom: 12,
+      paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 12, 3, 16, 6], 'circle-color': '#ffffff', 'circle-stroke-color': '#2F4FD0', 'circle-stroke-width': 2 },
+    });
+    map.addLayer({
+      id: 'tf-station-names', type: 'symbol', source, 'source-layer': 'poi',
+      filter: ['all', ['==', ['get', 'class'], 'railway'], ['in', ['get', 'subclass'], ['literal', ['station', 'subway', 'halt']]]],
+      minzoom: 13,
+      layout: { 'text-field': ENGLISH_NAME, 'text-size': 12, 'text-offset': [0, 1.1], 'text-anchor': 'top', 'text-font': ['Noto Sans Regular'] },
+      paint: { 'text-color': '#1C3076', 'text-halo-color': '#ffffff', 'text-halo-width': 1.5 },
+    });
+  } catch { /* the map still works without the highlight */ }
+}
+
+function pinEl(approx) {
+  const el = document.createElement('button');
+  el.type = 'button';
+  el.style.cssText = 'width:30px;height:38px;padding:0;border:0;background:none;cursor:pointer';
+  el.innerHTML = `<svg width="30" height="38" viewBox="0 0 30 38" aria-hidden="true"><path d="M15 36C15 36 3 22 3 14a12 12 0 1 1 24 0c0 8-12 22-12 22z" fill="${approx ? '#ffffff' : '#FFCE1F'}" stroke="#0A1745" stroke-width="3"/><circle cx="15" cy="14" r="4" fill="#0A1745"/></svg>`;
+  return el;
+}
 
 function popupEl(pt, onSelect) {
   const box = document.createElement('div');
-  box.style.minWidth = '180px';
+  box.style.cssText = 'min-width:180px;font-family:inherit';
   const mk = (tag, text, css) => {
     const el = document.createElement(tag);
     el.textContent = text;
@@ -37,34 +79,47 @@ function popupEl(pt, onSelect) {
 export default function JobsMap({ points, selectedId, onSelect }) {
   const el = useRef(null);
   const map = useRef(null);
-  const layer = useRef(null);
+  const markers = useRef([]);
+  const ready = useRef(false);
+  const latest = useRef({ points, selectedId, onSelect });
+  latest.current = { points, selectedId, onSelect };
+
+  const draw = () => {
+    if (!map.current) return;
+    const { points: pts, onSelect: pick } = latest.current;
+    markers.current.forEach((m) => m.remove());
+    markers.current = pts.map((pt) => {
+      const popup = new maplibregl.Popup({ offset: [0, -34], closeButton: true, maxWidth: '260px' }).setDOMContent(popupEl(pt, pick));
+      return new maplibregl.Marker({ element: pinEl(pt.approx), anchor: 'bottom' }).setLngLat([pt.lng, pt.lat]).setPopup(popup).addTo(map.current);
+    });
+    if (pts.length) {
+      const b = new maplibregl.LngLatBounds();
+      pts.forEach((p) => b.extend([p.lng, p.lat]));
+      map.current.fitBounds(b, { padding: 60, maxZoom: 14, duration: 0 });
+    }
+  };
 
   useEffect(() => {
-    map.current = L.map(el.current, { scrollWheelZoom: false }).setView([23.7, 120.95], 7);
-    // Esri World Street Map: free, no key, and it labels places in English (standard OpenStreetMap tiles use Chinese).
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
-      maxZoom: 19,
-      attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ, USGS, and contributors',
-    }).addTo(map.current);
-    layer.current = L.layerGroup().addTo(map.current);
+    map.current = new maplibregl.Map({ container: el.current, style: STYLE_URL, center: [120.95, 23.7], zoom: 6.3, attributionControl: { compact: true } });
+    map.current.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-left');
+    map.current.scrollZoom.disable(); // so scrolling the page does not get stuck on the map
+    map.current.on('load', () => {
+      prepareStyle(map.current);
+      ready.current = true;
+      draw();
+    });
     return () => {
+      markers.current.forEach((m) => m.remove());
+      markers.current = [];
       map.current.remove();
       map.current = null;
+      ready.current = false;
     };
   }, []);
 
   useEffect(() => {
-    if (!map.current) return;
-    layer.current.clearLayers();
-    points.forEach((pt) => {
-      const m = L.marker([pt.lat, pt.lng], { icon: pin(pt.approx), title: `${pt.job.title} – ${pt.job.school_name}`, zIndexOffset: pt.job.id === selectedId ? 1000 : 0 });
-      m.bindPopup(() => popupEl(pt, onSelect));
-      m.addTo(layer.current);
-    });
-    if (points.length) {
-      map.current.fitBounds(L.latLngBounds(points.map((p) => [p.lat, p.lng])), { padding: [40, 40], maxZoom: 14 });
-    }
-  }, [points, selectedId, onSelect]);
+    if (ready.current) draw();
+  }, [points, selectedId, onSelect]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return <div ref={el} className="h-[420px] sm:h-[520px] w-full rounded-2xl overflow-hidden border border-slate-200 z-0" role="region" aria-label="Map of schools hiring" />;
 }
