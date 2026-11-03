@@ -100,7 +100,7 @@ export default function Legal() {
           'Teachers: name, email, phone or LINE (optional), nationality, education, certificates, experience, an introduction, a photo (optional), a link to an intro video (optional), whether you are in Taiwan, visa and stay-until date, whether you need ARC sponsorship, where you want to work, and when you are available (including any hours you list for each day).',
           'Schools: school name and type, contact name and email, an application link (optional), a logo (optional), up to 3 school locations (address and optional Google Maps link), and the job details.',
           'Messages: if a school contacts a teacher through the site, we receive the sender’s name, school, email and message.',
-          'Technical data: like most websites, our hosting provider sees basic information such as your IP address when you visit.',
+          'Technical data: like most websites, our hosting provider sees basic information such as your IP address when you visit. When you submit a form we also keep your IP address for about 2 days, only to block spam and abuse.',
         ]} />
 
         <H3>What is public and what is private</H3>

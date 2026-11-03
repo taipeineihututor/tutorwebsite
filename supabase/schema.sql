@@ -239,3 +239,10 @@ create or replace view public.public_teachers as
   from public.teachers
   where status = 'approved';
 grant select on public.public_teachers to anon, authenticated;
+
+-- ---------------------------------------------------------------------------
+-- Hardening (already applied to the live project): rate limits on public forms, job contact
+-- emails served one at a time, stricter upload names. See the "hardening" migration.
+-- Phase 2 (run after the website that uses public_jobs is live):
+--   drop policy if exists "public can read approved jobs" on public.jobs;
+-- ---------------------------------------------------------------------------

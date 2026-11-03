@@ -59,11 +59,16 @@ const newestFirst = (a, b) => (a.created_at < b.created_at ? 1 : -1);
 
 export async function listJobs() {
   if (isDemo) return loadDb().jobs.filter((j) => j.status === 'approved').sort(newestFirst);
-  const { data, error } = await supabase
-    .from('jobs')
-    .select('*')
-    .eq('status', 'approved')
-    .order('created_at', { ascending: false });
+  // "public_jobs" is the approved jobs WITHOUT the contact email (see schema.sql).
+  const { data, error } = await supabase.from('public_jobs').select('*').order('created_at', { ascending: false });
+  if (error) throw error;
+  return data;
+}
+
+// The contact email is only handed out one job at a time, and rate-limited, so it cannot be bulk-harvested.
+export async function getJobContact(job) {
+  if (isDemo) return job.contact_email || null;
+  const { data, error } = await supabase.rpc('get_job_contact', { job_id: job.id });
   if (error) throw error;
   return data;
 }

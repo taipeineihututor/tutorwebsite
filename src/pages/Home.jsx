@@ -2,7 +2,7 @@ import React, { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useStat
 import {
   Search, MapPin, Building2, Navigation, List, Map as MapIcon, Briefcase, CheckCircle2, Sparkles, ChevronDown, Mail, ExternalLink, Loader2,
 } from 'lucide-react';
-import { listJobs } from '../lib/api';
+import { listJobs, getJobContact } from '../lib/api';
 import { CITIES, SCHOOL_TYPES, CITY_COORDS, fmtDate, mapsUrl } from '../lib/constants';
 import { Banner } from '../components/ui';
 import { geocodeBest, readGeoCache, writeGeoCache, sleep } from '../lib/geocode';
@@ -33,6 +33,21 @@ function mapPoints(jobs, geo = {}) {
 
 function JobCard({ job, defaultOpen = false }) {
   const [open, setOpen] = useState(defaultOpen);
+  const [email, setEmail] = useState('');
+  const [emailBusy, setEmailBusy] = useState(false);
+  const [emailError, setEmailError] = useState('');
+  const revealEmail = async () => {
+    setEmailBusy(true);
+    setEmailError('');
+    try {
+      const e = await getJobContact(job);
+      if (e) setEmail(e); else setEmailError('This job is no longer available.');
+    } catch {
+      setEmailError('Could not load the email address. Please try again in a little while.');
+    } finally {
+      setEmailBusy(false);
+    }
+  };
   const place = job.district ? `${job.city} (${job.district})` : job.city;
   return (
     <article id={`job-${job.id}`} className="bg-white text-slate-900 border border-white rounded-2xl p-5 sm:p-6 shadow-lg shadow-black/20 hover:shadow-xl transition">
@@ -104,12 +119,22 @@ function JobCard({ job, defaultOpen = false }) {
             {(job.start_asap || job.start_date) && <div><dt className="inline font-bold text-slate-900">Start date: </dt><dd className="inline">{job.start_asap ? 'ASAP' : fmtDate(job.start_date)}</dd></div>}
           </dl>
           <div className="flex flex-wrap gap-3 pt-1">
-            <a
-              href={`mailto:${job.contact_email}?subject=${encodeURIComponent(`Application: ${job.title}`)}`}
-              className="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-4 py-2.5 rounded-xl text-sm font-bold transition"
-            >
-              <Mail className="w-4 h-4" /> Email {job.contact_name}
-            </a>
+            {email ? (
+              <a
+                href={`mailto:${email}?subject=${encodeURIComponent(`Application: ${job.title}`)}`}
+                className="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-4 py-2.5 rounded-xl text-sm font-bold transition"
+              >
+                <Mail className="w-4 h-4" /> Email {job.contact_name} ({email})
+              </a>
+            ) : (
+              <button
+                type="button" onClick={revealEmail} disabled={emailBusy}
+                className="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-60 text-slate-950 px-4 py-2.5 rounded-xl text-sm font-bold transition"
+              >
+                {emailBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />} Show email to apply
+              </button>
+            )}
+            {emailError && <p role="alert" className="w-full text-sm font-semibold text-red-600">{emailError}</p>}
             {job.apply_link && (
               <a
                 href={job.apply_link}
