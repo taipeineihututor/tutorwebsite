@@ -4,7 +4,7 @@ import {
   Field, Chips, Choice, inputCls, PrimaryButton, SecondaryButton, Panel, PageShell, Banner,
 } from '../components/ui';
 import {
-  CITIES, SUBJECTS, EDUCATION, CERTIFICATES, EXPERIENCE, VISA_STATUSES, isVideoLink, ARC_NEEDS, DAYS, SLOTS,
+  CITIES, SUBJECTS, EDUCATION, CERTIFICATES, EXPERIENCE, VISA_STATUSES, isVideoLink, COUNTRIES, ARC_NEEDS, DAYS, SLOTS,
 } from '../lib/constants';
 import { submitTeacher } from '../lib/api';
 import { resizeImage } from '../lib/image';
@@ -229,9 +229,11 @@ export default function TeacherForm() {
                 </Field>
               </div>
 
-              <Field label="Nationality (passport country)" required error={errors.nationality} htmlFor="nationality">
-                <input id="nationality" className={inputCls} value={f.nationality} placeholder="e.g. Canada"
-                  onChange={(e) => set('nationality', e.target.value)} />
+              <Field label="Country of origin (nationality / passport country)" required error={errors.nationality} htmlFor="nationality"
+                hint="Start typing and pick your country from the list.">
+                <input id="nationality" list="country-list" className={inputCls} value={f.nationality} placeholder="e.g. Canada"
+                  autoComplete="off" onChange={(e) => set('nationality', e.target.value)} />
+                <datalist id="country-list">{COUNTRIES.map((c) => <option key={c} value={c} />)}</datalist>
               </Field>
 
               <Field label="Is English your first language?" required error={errors.native_english} group>

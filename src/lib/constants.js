@@ -139,3 +139,13 @@ export const CITY_COORDS = {
 // Intro videos: only YouTube and Google Drive links are accepted.
 const VIDEO_HOST = /^https:\/\/((www\.|m\.)?youtube\.com\/|youtu\.be\/|youtube-nocookie\.com\/|drive\.google\.com\/)/i;
 export const isVideoLink = (v) => VIDEO_HOST.test((v || '').trim());
+
+// Suggestions for "country of origin". Teachers can still type any other country.
+export const COUNTRIES = [
+  'Argentina', 'Australia', 'Austria', 'Belgium', 'Brazil', 'Canada', 'Chile', 'China', 'Colombia', 'Czech Republic',
+  'Denmark', 'Egypt', 'Finland', 'France', 'Germany', 'Ghana', 'Greece', 'Hong Kong', 'Hungary', 'India', 'Indonesia',
+  'Ireland', 'Israel', 'Italy', 'Jamaica', 'Japan', 'Kenya', 'Malaysia', 'Mexico', 'Netherlands', 'New Zealand',
+  'Nigeria', 'Norway', 'Pakistan', 'Peru', 'Philippines', 'Poland', 'Portugal', 'Romania', 'Russia', 'Singapore',
+  'South Africa', 'South Korea', 'Spain', 'Sweden', 'Switzerland', 'Taiwan', 'Thailand', 'Turkey', 'Ukraine',
+  'United Kingdom', 'United States', 'Vietnam', 'Zimbabwe',
+];

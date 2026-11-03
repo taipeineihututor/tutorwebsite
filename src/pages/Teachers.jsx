@@ -197,6 +197,7 @@ export default function Teachers() {
   const [teachers, setTeachers] = useState(null);
   const [loadError, setLoadError] = useState('');
   const [city, setCity] = useState('All Locations');
+  const [country, setCountry] = useState('Any');
   const [subject, setSubject] = useState('Any');
   const [minExp, setMinExp] = useState('any');
   const [checks, setChecks] = useState({});
@@ -209,6 +210,16 @@ export default function Teachers() {
     });
   }, []);
 
+  // Countries that actually appear in approved profiles (case-insensitive, shown in the form people used)
+  const countries = useMemo(() => {
+    const seen = new Map();
+    (teachers || []).forEach((t) => {
+      const n = (t.nationality || '').trim();
+      if (n && !seen.has(n.toLowerCase())) seen.set(n.toLowerCase(), n);
+    });
+    return [...seen.values()].sort((a, b) => a.localeCompare(b));
+  }, [teachers]);
+
   const toggle = (k) => setChecks((c) => ({ ...c, [k]: !c[k] }));
   const today = new Date().toISOString().slice(0, 10);
 
@@ -216,6 +227,7 @@ export default function Teachers() {
     () =>
       (teachers || []).filter((t) => {
         if (city !== 'All Locations' && !(t.cities || []).includes(city) && !(t.cities || []).includes('Other / Flexible')) return false;
+        if (country !== 'Any' && (t.nationality || '').trim().toLowerCase() !== country.toLowerCase()) return false;
         if (subject !== 'Any' && !(t.subjects || []).includes(subject)) return false;
         if (minExp !== 'any' && EXP_ORDER.indexOf(t.experience) < EXP_ORDER.indexOf(minExp)) return false;
         // Ticking both "In Taiwan" and "Not in Taiwan" means either, so only filter when exactly one is ticked.
@@ -231,10 +243,10 @@ export default function Teachers() {
         if (checks.part && !(t.job_types || []).includes('Part-Time')) return false;
         return true;
       }),
-    [teachers, city, subject, minExp, checks, today],
+    [teachers, city, country, subject, minExp, checks, today],
   );
 
-  const reset = () => { setCity('All Locations'); setSubject('Any'); setMinExp('any'); setChecks({}); };
+  const reset = () => { setCity('All Locations'); setCountry('Any'); setSubject('Any'); setMinExp('any'); setChecks({}); };
 
   return (
     <section className="px-4 sm:px-6 lg:px-8 py-10 sm:py-14 bg-gradient-to-b from-[#0F2263] to-[#0A1745]">
@@ -243,7 +255,14 @@ export default function Teachers() {
         <p className="text-slate-300 text-lg mb-8">Every profile has been reviewed. Contact details stay private – we'll forward your message.</p>
 
         <div className="bg-white text-slate-900 rounded-3xl p-6 shadow-2xl shadow-emerald-500/10 mb-8">
-          <div className="grid sm:grid-cols-3 gap-4">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="space-y-1.5">
+              <label htmlFor="f_country" className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Country of origin</label>
+              <select id="f_country" className={selectCls} value={country} onChange={(e) => setCountry(e.target.value)}>
+                <option>Any</option>
+                {countries.map((c) => <option key={c}>{c}</option>)}
+              </select>
+            </div>
             <div className="space-y-1.5">
               <label htmlFor="f_city" className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Wants to work in</label>
               <select id="f_city" className={selectCls} value={city} onChange={(e) => setCity(e.target.value)}>
