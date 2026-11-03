@@ -12,10 +12,10 @@ const selectCls =
 const EXP_ORDER = ['0', '1', '1-2', '3-5', '6-10', '10+'];
 const CHECKS = [
   ['in', 'In Taiwan now'],
-  ['abroad', 'Not in Taiwan yet'],
   ['native', 'Native English speaker'],
   ['legal', 'Can already work legally (no ARC sponsorship needed)'],
   ['needsArc', 'Needs ARC sponsorship'],
+  ['license', 'Has a teacher license'],
   ['cert', 'Has a teaching certificate (TEFL, TESOL, …)'],
   ['video', 'Has an intro video'],
   ['now', 'Available to start now'],
@@ -230,9 +230,8 @@ export default function Teachers() {
         if (country !== 'Any' && (t.nationality || '').trim().toLowerCase() !== country.toLowerCase()) return false;
         if (subject !== 'Any' && !(t.subjects || []).includes(subject)) return false;
         if (minExp !== 'any' && EXP_ORDER.indexOf(t.experience) < EXP_ORDER.indexOf(minExp)) return false;
-        // Ticking both "In Taiwan" and "Not in Taiwan" means either, so only filter when exactly one is ticked.
-        if (checks.in && !checks.abroad && !t.in_taiwan) return false;
-        if (checks.abroad && !checks.in && t.in_taiwan) return false;
+        if (checks.in && !t.in_taiwan) return false;
+        if (checks.license && !(t.certificates || []).includes('Teaching license (home country)')) return false;
         if (checks.native && t.native_english !== 'yes') return false;
         if (checks.legal && t.needs_arc !== 'no') return false;
         if (checks.needsArc && t.needs_arc !== 'yes') return false;
