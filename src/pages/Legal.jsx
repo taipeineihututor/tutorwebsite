@@ -127,6 +127,7 @@ export default function Legal() {
           'Supabase: stores the database and photos.',
           'Resend: sends the email alerts to the site admin.',
           'Google Fonts: the site’s fonts load from Google, so Google can see your IP address when a page loads.',
+          'OpenStreetMap: the job map loads its map tiles from OpenStreetMap, and when a school posts a job the address of each location is sent to OpenStreetMap’s free search service (Nominatim) to place it on the map.',
         ]} />
         <P>
           These providers may store data on servers outside Taiwan, for example in Japan or the United States. We may

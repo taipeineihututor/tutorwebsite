@@ -3,6 +3,7 @@ import { CheckCircle2, Loader2, ImagePlus, MapPin, Plus, Trash2 } from 'lucide-r
 import { Field, Chips, Choice, inputCls, PrimaryButton, Panel, PageShell, Banner } from '../components/ui';
 import { CITIES, SCHOOL_TYPES, JOB_TYPES, isGoogleMapsLink } from '../lib/constants';
 import { resizeImage } from '../lib/image';
+import { geocodeAddress } from '../lib/geocode';
 import { submitJob } from '../lib/api';
 
 const initial = {
@@ -81,6 +82,13 @@ export default function JobForm() {
     }
     setBusy(true);
     try {
+      // Place each address on the map (best effort; never blocks sending).
+      const locations = [];
+      for (const l of f.locations.filter((x) => x.address.trim()).slice(0, MAX_LOCATIONS)) {
+        const pos = await geocodeAddress(l.address);
+        locations.push({ label: l.label.trim(), address: l.address.trim(), maps_url: l.maps_url.trim(), ...(pos || {}) });
+        if (locations.length < f.locations.length) await new Promise((r) => setTimeout(r, 1100)); // be polite: 1 request/second
+      }
       await submitJob({
         school_name: f.school_name.trim(),
         school_type: f.school_type,
@@ -97,10 +105,7 @@ export default function JobForm() {
         schedule: f.schedule.trim() || null,
         description: f.description.trim(),
         requirements: f.requirements.trim() || null,
-        locations: f.locations
-          .map((l) => ({ label: l.label.trim(), address: l.address.trim(), maps_url: l.maps_url.trim() }))
-          .filter((l) => l.address)
-          .slice(0, MAX_LOCATIONS),
+        locations: locations,
         consent: true,
       }, logo?.blob || null);
       setDone(true);

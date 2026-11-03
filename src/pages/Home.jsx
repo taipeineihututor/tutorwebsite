@@ -1,19 +1,38 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Search, MapPin, Building2, Navigation, Briefcase, CheckCircle2, Sparkles, ChevronDown, Mail, ExternalLink, Loader2,
+  Search, MapPin, Building2, Navigation, List, Map as MapIcon, Briefcase, CheckCircle2, Sparkles, ChevronDown, Mail, ExternalLink, Loader2,
 } from 'lucide-react';
 import { listJobs } from '../lib/api';
-import { CITIES, SCHOOL_TYPES, fmtDate, mapsUrl } from '../lib/constants';
+import { CITIES, SCHOOL_TYPES, CITY_COORDS, fmtDate, mapsUrl } from '../lib/constants';
 import { Banner } from '../components/ui';
 
 const selectCls =
   'w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:bg-white appearance-none transition';
 
-function JobCard({ job }) {
-  const [open, setOpen] = useState(false);
+const JobsMap = lazy(() => import('../components/JobsMap'));
+
+// One pin per location. Jobs without a placed address appear at their city centre (approximate).
+function mapPoints(jobs) {
+  const pts = [];
+  jobs.forEach((job, ji) => {
+    const exact = (job.locations || []).filter((l) => Number.isFinite(l.lat) && Number.isFinite(l.lng));
+    if (exact.length) {
+      exact.forEach((l, i) => pts.push({ key: `${job.id}-${i}`, lat: l.lat, lng: l.lng, approx: false, label: [l.label, l.address].filter(Boolean).join(' – '), job }));
+    } else if (CITY_COORDS[job.city]) {
+      const [lat, lng] = CITY_COORDS[job.city];
+      const a = (ji * 2.399) % (2 * Math.PI); // small spread so pins in one city do not hide each other
+      const r = 0.012 + 0.004 * (ji % 4);
+      pts.push({ key: `${job.id}-c`, lat: lat + r * Math.sin(a), lng: lng + r * Math.cos(a), approx: true, label: job.district || '', job });
+    }
+  });
+  return pts;
+}
+
+function JobCard({ job, defaultOpen = false }) {
+  const [open, setOpen] = useState(defaultOpen);
   const place = job.district ? `${job.city} (${job.district})` : job.city;
   return (
-    <article className="bg-white text-slate-900 border border-white rounded-2xl p-5 sm:p-6 shadow-lg shadow-black/20 hover:shadow-xl transition">
+    <article id={`job-${job.id}`} className="bg-white text-slate-900 border border-white rounded-2xl p-5 sm:p-6 shadow-lg shadow-black/20 hover:shadow-xl transition">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div className="flex items-start gap-3 min-w-0">
           {job.logo_url && (
@@ -113,6 +132,10 @@ export default function Home() {
   const [selectedSchoolType, setSelectedSchoolType] = useState('All School Types');
   const [selectedJobType, setSelectedJobType] = useState('Full & Part Time');
   const [arcOnly, setArcOnly] = useState(false);
+  const [view, setView] = useState('list'); // list | map
+  const [selectedId, setSelectedId] = useState(null);
+  const selectedRef = useRef(null);
+  const onSelect = useCallback((id) => setSelectedId(id), []);
 
   useEffect(() => {
     listJobs().then(setJobs).catch(() => {
@@ -132,6 +155,12 @@ export default function Home() {
       return true;
     });
   }, [jobs, searchTerm, selectedLocation, selectedSchoolType, selectedJobType, arcOnly]);
+
+  const points = useMemo(() => mapPoints(filtered), [filtered]);
+  const selectedJob = filtered.find((j) => j.id === selectedId) || null;
+  useEffect(() => {
+    if (selectedJob) selectedRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, [selectedId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const reset = () => {
     setSearchTerm(''); setSelectedLocation('All Locations'); setSelectedSchoolType('All School Types');
@@ -265,7 +294,35 @@ export default function Home() {
                 )}
               </div>
             )}
-            {filtered.map((j) => <JobCard key={j.id} job={j} />)}
+            {jobs !== null && !loadError && jobs.length > 0 && (
+              <div className="flex justify-center">
+                <div role="tablist" aria-label="How to view jobs" className="inline-flex bg-white rounded-2xl p-1 shadow-lg shadow-black/20">
+                  {[['list', 'List', List], ['map', 'Map', MapIcon]].map(([k, label, Icon]) => (
+                    <button key={k} role="tab" aria-selected={view === k} onClick={() => setView(k)}
+                      className={`inline-flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-bold transition ${view === k ? 'bg-emerald-500 text-slate-950' : 'text-slate-600 hover:text-slate-900'}`}>
+                      <Icon className="w-4 h-4" /> {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {view === 'map' && filtered.length > 0 && (
+              <div className="bg-white rounded-3xl p-3 sm:p-4 shadow-xl shadow-black/20">
+                <Suspense fallback={<p className="flex items-center justify-center gap-2 text-slate-500 py-24"><Loader2 className="w-5 h-5 animate-spin" /> Loading map…</p>}>
+                  <JobsMap points={points} selectedId={selectedId} onSelect={onSelect} />
+                </Suspense>
+                <p className="text-xs text-slate-500 mt-2 px-1">
+                  Yellow pins are exact addresses; white pins are placed at the city centre because the school has not given an address yet. Click a pin, then “View this ad”.
+                </p>
+              </div>
+            )}
+
+            {view === 'map' && selectedJob && (
+              <div ref={selectedRef}><JobCard key={selectedJob.id} job={selectedJob} defaultOpen /></div>
+            )}
+
+            {view === 'list' && filtered.map((j) => <JobCard key={j.id} job={j} />)}
           </div>
         </div>
       </section>

@@ -124,3 +124,14 @@ export const mapsUrl = (loc) =>
   isGoogleMapsLink(loc?.maps_url)
     ? loc.maps_url.trim()
     : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(loc?.address || '')}`;
+
+// Rough city centres, used on the map for jobs whose address could not be placed exactly.
+export const CITY_COORDS = {
+  'Taipei City': [25.0375, 121.5637],
+  'New Taipei City': [25.0120, 121.4650],
+  'Taoyuan City': [24.9937, 121.3010],
+  'Hsinchu City / County': [24.8138, 120.9675],
+  'Taichung City': [24.1477, 120.6736],
+  'Tainan City': [22.9999, 120.2270],
+  'Kaohsiung City': [22.6273, 120.3014],
+};
