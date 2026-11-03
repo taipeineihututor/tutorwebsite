@@ -219,6 +219,20 @@ export const admin = {
     if (error) throw error;
   },
 
+  // Saves a private note (what we asked for / why it was rejected), optionally changing the status too.
+  async saveNote(kind, id, note, status) {
+    const patch = { admin_note: note || null, ...(status ? { status } : {}) };
+    if (isDemo) {
+      const db = loadDb();
+      const row = db[kind].find((r) => r.id === id);
+      if (row) Object.assign(row, patch);
+      saveDb(db);
+      return;
+    }
+    const { error } = await supabase.from(kind).update(patch).eq('id', id);
+    if (error) throw error;
+  },
+
   async setStatus(kind, id, status) {
     if (isDemo) {
       const db = loadDb();

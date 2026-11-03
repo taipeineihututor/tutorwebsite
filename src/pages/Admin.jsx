@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Check, X, Trash2, ChevronDown, Loader2, LogOut, Mail, User } from 'lucide-react';
+import { Check, X, Trash2, ChevronDown, Loader2, LogOut, Mail, MessageSquare, User } from 'lucide-react';
 import { admin } from '../lib/api';
 import { geocodeBest, sleep } from '../lib/geocode';
 import { isDemo } from '../lib/supabase';
@@ -43,6 +43,7 @@ function teacherRows(t) {
     ['Hours by day', DAYS.filter((d) => t.availability_notes?.[d.key]).map((d) => `${d.label}: ${t.availability_notes[d.key]}`).join('\n')],
     ['Intro video', t.video_url],
     ['Introduction', t.bio],
+    ['Admin note (private)', t.admin_note],
   ];
 }
 
@@ -62,6 +63,7 @@ function jobRows(j) {
     ['Hours', j.schedule],
     ['Description', j.description],
     ['Requirements', j.requirements],
+    ['Admin note (private)', j.admin_note],
   ];
 }
 
@@ -74,8 +76,66 @@ function StatusPill({ status }) {
   return <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${cls}`}>{status}</span>;
 }
 
-function Row({ kind, item, onSet, onDelete, busy }) {
+const SIGN_OFF = '\n\nThank you,\nTeachFormosa team\nteachformosa@gmail.com';
+// Ready-made messages. {name} is replaced with the person's first name.
+const TEMPLATES = {
+  jobs: [
+    ['Ask for more details', 'Hi {name},\n\nThanks for posting your job on TeachFormosa. Before we can publish it, could you please send us a bit more information:\n\n- \n- \n\nOnce we have it, we will review it again right away.'],
+    ['Missing pay or work permit info', 'Hi {name},\n\nThanks for your post. Teachers look first at pay and whether you can offer a Work Permit (support ARC). Could you tell us the pay range and whether you can support the ARC? We will publish it as soon as we have it.'],
+    ['Not a teaching job', 'Hi {name},\n\nThank you for your post. Unfortunately we can only publish teaching jobs on TeachFormosa, so we cannot publish this one.'],
+    ['Duplicate post', 'Hi {name},\n\nWe already have this job on TeachFormosa, so we did not publish a second copy. If you want to change the existing post, just reply to this email.'],
+    ['Other (write your own)', 'Hi {name},\n\n'],
+  ],
+  teachers: [
+    ['Ask for more details', 'Hi {name},\n\nThanks for creating your profile on TeachFormosa. Before we can publish it, could you please send us a bit more information:\n\n- \n- \n\nOnce we have it, we will review it again right away.'],
+    ['Introduction too short', 'Hi {name},\n\nThanks for your profile. Schools read the introduction first. Could you send us 3-4 sentences about your teaching experience and the age groups you like to teach? We will add it and publish your profile.'],
+    ['Photo problem', 'Hi {name},\n\nThanks for your profile. We could not use the photo you uploaded (it should be a clear photo of your face). Could you send a new one by replying to this email?'],
+    ['Cannot publish', 'Hi {name},\n\nThank you for your interest in TeachFormosa. Unfortunately we cannot publish your profile at this time.'],
+    ['Other (write your own)', 'Hi {name},\n\n'],
+  ],
+};
+
+function NotePanel({ kind, item, busy, onSave, onClose }) {
+  const isTeacher = kind === 'teachers';
+  const list = TEMPLATES[kind];
+  const first = ((isTeacher ? item.full_name : item.contact_name) || '').trim().split(/\s+/)[0] || 'there';
+  const fill = (t) => t.replace('{name}', first);
+  const [which, setWhich] = useState(0);
+  const [text, setText] = useState(fill(list[0][1]));
+  const [reject, setReject] = useState(false);
+  const to = isTeacher ? item.email : item.contact_email;
+
+  return (
+    <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-3">
+      <p className="text-sm font-bold text-slate-900">Message to {first} <span className="font-normal text-slate-500">({to})</span></p>
+      <select aria-label="Message type" className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm font-medium"
+        value={which} onChange={(e) => { const i = Number(e.target.value); setWhich(i); setText(fill(list[i][1])); }}>
+        {list.map(([label], i) => <option key={label} value={i}>{label}</option>)}
+      </select>
+      <textarea aria-label="Message" rows={8} maxLength={1800} value={text} onChange={(e) => setText(e.target.value)}
+        className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm leading-relaxed" />
+      <label className="flex items-center gap-2.5 cursor-pointer select-none">
+        <input type="checkbox" checked={reject} onChange={(e) => setReject(e.target.checked)}
+          className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-600" />
+        <span className="text-sm font-semibold text-slate-700">Also reject this {isTeacher ? 'profile' : 'post'} (otherwise it stays as it is)</span>
+      </label>
+      <p className="text-xs text-slate-500">
+        This saves the message as a private note and opens your email app with the message ready to send. Nothing is sent automatically.
+      </p>
+      <div className="flex flex-wrap gap-2">
+        <PrimaryButton disabled={busy || text.trim().length < 10} className="!py-2 !text-sm"
+          onClick={() => onSave(item, text.trim(), reject ? 'rejected' : undefined, to, isTeacher ? 'your TeachFormosa profile' : `your TeachFormosa job post: ${item.title}`, text.trim() + SIGN_OFF)}>
+          <Mail className="w-4 h-4" /> Save note &amp; open email
+        </PrimaryButton>
+        <SecondaryButton disabled={busy} onClick={onClose} className="!py-2 !text-sm">Cancel</SecondaryButton>
+      </div>
+    </div>
+  );
+}
+
+function Row({ kind, item, onSet, onDelete, onNote, busy }) {
   const [open, setOpen] = useState(false);
+  const [noting, setNoting] = useState(false);
   const isTeacher = kind === 'teachers';
   const rows = (isTeacher ? teacherRows(item) : jobRows(item)).filter(([, v]) => v);
   const title = isTeacher ? item.full_name : item.title;
@@ -93,6 +153,7 @@ function Row({ kind, item, onSet, onDelete, busy }) {
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="font-black text-slate-900">{title}</h3>
             <StatusPill status={item.status} />
+            {item.admin_note && <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-sky-100 text-sky-800">note saved</span>}
           </div>
           <p className="text-sm text-slate-600 break-words">{sub}</p>
           <p className="text-xs text-slate-400 mt-0.5">Sent {new Date(item.created_at).toLocaleString()}</p>
@@ -125,8 +186,14 @@ function Row({ kind, item, onSet, onDelete, busy }) {
         {item.status === 'approved' && (
           <SecondaryButton disabled={busy} onClick={() => onSet(item, 'pending')} className="!py-2 !text-sm">Take offline</SecondaryButton>
         )}
+        <SecondaryButton disabled={busy} onClick={() => setNoting((v) => !v)} className="!py-2 !text-sm"><MessageSquare className="w-4 h-4" /> Ask for details / explain</SecondaryButton>
         <SecondaryButton disabled={busy} onClick={() => onDelete(item)} className="!py-2 !text-sm !text-red-700 !border-red-200 hover:!border-red-500"><Trash2 className="w-4 h-4" /> Delete</SecondaryButton>
       </div>
+
+      {noting && (
+        <NotePanel kind={kind} item={item} busy={busy} onClose={() => setNoting(false)}
+          onSave={async (...args) => { const ok = await onNote(...args); if (ok) setNoting(false); }} />
+      )}
     </article>
   );
 }
@@ -257,6 +324,22 @@ export default function Admin() {
     }
   };
   const setItemStatus = (item, s) => act(() => admin.setStatus(tab, item.id, s));
+  // Saves the note (and optionally rejects), then opens the admin's email app with the message ready.
+  const sendNote = async (item, note, newStatus, to, subjectBit, body) => {
+    setBusy(true);
+    setError('');
+    try {
+      await admin.saveNote(tab, item.id, note, newStatus);
+      await load();
+      window.location.href = `mailto:${to}?subject=${encodeURIComponent(`TeachFormosa: ${subjectBit}`)}&body=${encodeURIComponent(body)}`;
+      return true;
+    } catch {
+      setError('Could not save the note. Please try again.');
+      return false;
+    } finally {
+      setBusy(false);
+    }
+  };
   const deleteItem = (item) => {
     if (window.confirm('Delete this permanently? This cannot be undone.')) act(() => admin.remove(tab, item));
   };
@@ -330,7 +413,7 @@ export default function Admin() {
                   </article>
                 ))
               : list.map((item) => (
-                  <Row key={item.id} kind={tab} item={item} busy={busy} onSet={setItemStatus} onDelete={deleteItem} />
+                  <Row key={item.id} kind={tab} item={item} busy={busy} onSet={setItemStatus} onDelete={deleteItem} onNote={sendNote} />
                 ))}
           </div>
         </Panel>
