@@ -1,0 +1,411 @@
+import React, { useEffect, useRef, useState } from 'react';
+import { Camera, CheckCircle2, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import {
+  Field, Chips, Choice, inputCls, PrimaryButton, SecondaryButton, Panel, PageShell, Banner,
+} from '../components/ui';
+import {
+  CITIES, SUBJECTS, EDUCATION, CERTIFICATES, EXPERIENCE, VISA_STATUSES, ARC_NEEDS, DAYS, SLOTS,
+} from '../lib/constants';
+import { submitTeacher } from '../lib/api';
+import { resizeImage } from '../lib/image';
+
+const STEPS = ['About you', 'Taiwan & visa', 'Availability'];
+
+const initial = {
+  full_name: '', email: '', phone: '', nationality: '', native_english: '',
+  education: '', certificates: [], experience: '', subjects: [], bio: '',
+  in_taiwan: '', visa_status: '', stay_until: '', arrival_date: '', needs_arc: '', cities: [],
+  job_types: [], available_from: '', availability: {},
+  consent: false, website: '', // "website" is a hidden trap for spam bots
+};
+
+const emailOk = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+
+function validate(step, f) {
+  const e = {};
+  if (step === 0) {
+    if (f.full_name.trim().length < 2) e.full_name = 'Please enter your full name.';
+    if (!emailOk(f.email.trim())) e.email = 'Please enter a valid email address.';
+    if (!f.nationality.trim()) e.nationality = 'Please enter your nationality / passport country.';
+    if (!f.native_english) e.native_english = 'Please choose one.';
+    if (!f.education) e.education = 'Please choose your highest education.';
+    if (!f.experience) e.experience = 'Please choose your teaching experience.';
+    if (f.subjects.length === 0) e.subjects = 'Pick at least one age group or subject.';
+    if (f.bio.trim().length < 20) e.bio = 'Please write at least a couple of sentences about yourself.';
+  }
+  if (step === 1) {
+    if (!f.in_taiwan) e.in_taiwan = 'Please choose one.';
+    if (f.in_taiwan === 'yes') {
+      if (!f.visa_status) e.visa_status = 'Please choose your current visa / permit.';
+      if (!f.stay_until) e.stay_until = 'Please enter the date your current permit or visa ends.';
+    }
+    if (!f.needs_arc) e.needs_arc = 'Please choose one.';
+    if (f.cities.length === 0) e.cities = 'Pick at least one place you would work.';
+  }
+  if (step === 2) {
+    if (f.job_types.length === 0) e.job_types = 'Pick full-time, part-time, or both.';
+    if (!f.available_from) e.available_from = 'Please enter the date you can start.';
+    if (!f.consent) e.consent = 'Please tick the box to continue.';
+  }
+  return e;
+}
+
+export default function TeacherForm() {
+  const [step, setStep] = useState(0);
+  const [f, setF] = useState(initial);
+  const [errors, setErrors] = useState({});
+  const [photo, setPhoto] = useState(null); // { blob, preview }
+  const [photoError, setPhotoError] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+  const [done, setDone] = useState(false);
+  const top = useRef(null);
+
+  const set = (k, v) => setF((p) => ({ ...p, [k]: v }));
+  useEffect(() => () => photo && URL.revokeObjectURL(photo.preview), [photo]);
+
+  const scrollTop = () => top.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  const onPhoto = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setPhotoError('');
+    try {
+      const blob = await resizeImage(file);
+      setPhoto({ blob, preview: URL.createObjectURL(blob) });
+    } catch (err) {
+      setPhotoError(err.message);
+    }
+  };
+
+  const toggleSlot = (day, slot) => {
+    const cur = f.availability[day] || [];
+    const next = cur.includes(slot) ? cur.filter((s) => s !== slot) : [...cur, slot];
+    set('availability', { ...f.availability, [day]: next });
+  };
+
+  const next = () => {
+    const e = validate(step, f);
+    setErrors(e);
+    if (Object.keys(e).length === 0) {
+      setStep(step + 1);
+      setTimeout(scrollTop, 0);
+    }
+  };
+
+  const submit = async () => {
+    const e = validate(2, f);
+    setErrors(e);
+    if (Object.keys(e).length) return;
+    setSubmitError('');
+    if (f.website) { // bot filled the hidden field: pretend it worked
+      setDone(true);
+      return;
+    }
+    setBusy(true);
+    try {
+      const inTaiwan = f.in_taiwan === 'yes';
+      const cleanAvailability = Object.fromEntries(
+        Object.entries(f.availability).filter(([, v]) => v.length > 0),
+      );
+      await submitTeacher(
+        {
+          full_name: f.full_name.trim(),
+          email: f.email.trim(),
+          phone: f.phone.trim() || null,
+          nationality: f.nationality.trim(),
+          native_english: f.native_english,
+          education: f.education,
+          certificates: f.certificates,
+          experience: f.experience,
+          subjects: f.subjects,
+          bio: f.bio.trim(),
+          cities: f.cities,
+          in_taiwan: inTaiwan,
+          visa_status: inTaiwan ? f.visa_status : null,
+          stay_until: inTaiwan ? f.stay_until || null : null,
+          arrival_date: !inTaiwan ? f.arrival_date || null : null,
+          needs_arc: f.needs_arc,
+          job_types: f.job_types,
+          available_from: f.available_from || null,
+          availability: cleanAvailability,
+          consent: true,
+        },
+        photo?.blob || null,
+      );
+      setDone(true);
+      setTimeout(scrollTop, 0);
+    } catch (err) {
+      setSubmitError(
+        'Sorry, something went wrong and your profile was not sent. Please try again in a moment. ' +
+          (err?.message ? `(${err.message})` : ''),
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (done) {
+    return (
+      <PageShell title="Thank you!">
+        <div ref={top} />
+        <Panel>
+          <div className="text-center py-6 space-y-4">
+            <CheckCircle2 className="w-14 h-14 text-emerald-500 mx-auto" />
+            <h2 className="text-2xl font-black">Your profile has been sent for review</h2>
+            <p className="text-slate-600 max-w-md mx-auto">
+              We check every profile before it goes live. Once approved, schools will be able to find you. We may
+              email you at <strong>{f.email}</strong> if we have any questions.
+            </p>
+            <a href="#/" className="inline-block text-emerald-700 font-bold hover:underline">
+              Browse teaching jobs →
+            </a>
+          </div>
+        </Panel>
+      </PageShell>
+    );
+  }
+
+  return (
+    <PageShell
+      title="Create your teacher profile"
+      subtitle="Takes about 3 minutes. Schools will see your profile once we've checked it."
+    >
+      <div ref={top} />
+      <Panel>
+        {/* progress */}
+        <ol className="flex items-center gap-2 mb-6" aria-label="Progress">
+          {STEPS.map((s, i) => (
+            <li key={s} className="flex-1">
+              <div className={`h-1.5 rounded-full ${i <= step ? 'bg-emerald-500' : 'bg-slate-200'}`} />
+              <p className={`mt-1.5 text-xs font-bold ${i === step ? 'text-slate-900' : 'text-slate-400'}`}>
+                {i + 1}. {s}
+              </p>
+            </li>
+          ))}
+        </ol>
+
+        <div className="space-y-6">
+          {step === 0 && (
+            <>
+              <div className="flex items-center gap-4">
+                <div className="w-24 h-24 rounded-full bg-slate-100 border-2 border-dashed border-slate-300 overflow-hidden flex items-center justify-center shrink-0">
+                  {photo ? (
+                    <img src={photo.preview} alt="Your profile preview" className="w-full h-full object-cover" />
+                  ) : (
+                    <Camera className="w-8 h-8 text-slate-400" />
+                  )}
+                </div>
+                <div className="space-y-1.5">
+                  <label className="inline-block cursor-pointer bg-slate-900 hover:bg-slate-700 text-white px-4 py-2.5 rounded-xl text-sm font-bold transition">
+                    {photo ? 'Change photo' : 'Add a photo'}
+                    <input type="file" accept="image/*" className="sr-only" onChange={onPhoto} />
+                  </label>
+                  <p className="text-sm text-slate-500">Optional, but profiles with a friendly photo get more attention.</p>
+                  {photoError && <p role="alert" className="text-sm font-semibold text-red-600">{photoError}</p>}
+                </div>
+              </div>
+
+              <Field label="Full name" required error={errors.full_name} htmlFor="full_name"
+                hint="Schools only see your first name and last initial (for example “Jane S.”).">
+                <input id="full_name" className={inputCls} value={f.full_name} autoComplete="name"
+                  onChange={(e) => set('full_name', e.target.value)} />
+              </Field>
+
+              <div className="grid sm:grid-cols-2 gap-6">
+                <Field label="Email" required error={errors.email} htmlFor="email" hint="Private – never shown publicly.">
+                  <input id="email" type="email" inputMode="email" className={inputCls} value={f.email}
+                    autoComplete="email" onChange={(e) => set('email', e.target.value)} />
+                </Field>
+                <Field label="Phone / LINE / WhatsApp" htmlFor="phone" hint="Optional and private.">
+                  <input id="phone" className={inputCls} value={f.phone} autoComplete="tel"
+                    onChange={(e) => set('phone', e.target.value)} />
+                </Field>
+              </div>
+
+              <Field label="Nationality (passport country)" required error={errors.nationality} htmlFor="nationality">
+                <input id="nationality" className={inputCls} value={f.nationality} placeholder="e.g. Canada"
+                  onChange={(e) => set('nationality', e.target.value)} />
+              </Field>
+
+              <Field label="Is English your first language?" required error={errors.native_english} group>
+                <Choice
+                  options={[{ value: 'yes', label: 'Yes' }, { value: 'no', label: 'No' }]}
+                  value={f.native_english} onChange={(v) => set('native_english', v)}
+                />
+              </Field>
+
+              <Field label="Highest education" required error={errors.education} htmlFor="education">
+                <select id="education" className={inputCls} value={f.education} onChange={(e) => set('education', e.target.value)}>
+                  <option value="">Choose…</option>
+                  {EDUCATION.map((o) => <option key={o}>{o}</option>)}
+                </select>
+              </Field>
+
+              <Field label="Teaching certificates" group hint="Choose all that apply.">
+                <Chips multi options={CERTIFICATES} value={f.certificates} onChange={(v) => set('certificates', v)} />
+              </Field>
+
+              <Field label="Teaching experience" required error={errors.experience} htmlFor="experience">
+                <select id="experience" className={inputCls} value={f.experience} onChange={(e) => set('experience', e.target.value)}>
+                  <option value="">Choose…</option>
+                  {EXPERIENCE.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
+              </Field>
+
+              <Field label="What do you want to teach?" required error={errors.subjects} group hint="Choose all that apply.">
+                <Chips multi options={SUBJECTS} value={f.subjects} onChange={(v) => set('subjects', v)} />
+              </Field>
+
+              <Field label="A short introduction" required error={errors.bio} htmlFor="bio"
+                hint="Tell schools about your teaching style and background.">
+                <textarea id="bio" rows={5} maxLength={1200} className={inputCls} value={f.bio}
+                  onChange={(e) => set('bio', e.target.value)} />
+                <p className="text-xs text-slate-400 text-right">{f.bio.length}/1200</p>
+              </Field>
+            </>
+          )}
+
+          {step === 1 && (
+            <>
+              <Field label="Are you already in Taiwan?" required error={errors.in_taiwan} group>
+                <Choice
+                  options={[
+                    { value: 'yes', label: "Yes, I'm in Taiwan now" },
+                    { value: 'no', label: 'No, I would be coming from abroad' },
+                  ]}
+                  value={f.in_taiwan} onChange={(v) => set('in_taiwan', v)}
+                />
+              </Field>
+
+              {f.in_taiwan === 'yes' && (
+                <>
+                  <Field label="What is your current visa / permit?" required error={errors.visa_status} group>
+                    <Choice options={VISA_STATUSES} value={f.visa_status} onChange={(v) => set('visa_status', v)} />
+                  </Field>
+                  <Field label="Until when can you stay?" required error={errors.stay_until} htmlFor="stay_until"
+                    hint="The date your current visa or ARC expires.">
+                    <input id="stay_until" type="date" className={inputCls} value={f.stay_until}
+                      onChange={(e) => set('stay_until', e.target.value)} />
+                  </Field>
+                </>
+              )}
+
+              {f.in_taiwan === 'no' && (
+                <Field label="When could you arrive in Taiwan?" htmlFor="arrival_date" hint="Optional. A rough date is fine.">
+                  <input id="arrival_date" type="date" className={inputCls} value={f.arrival_date}
+                    onChange={(e) => set('arrival_date', e.target.value)} />
+                </Field>
+              )}
+
+              <Field label="Do you need a school to sponsor your work permit & ARC?" required error={errors.needs_arc} group>
+                <Choice options={ARC_NEEDS} value={f.needs_arc} onChange={(v) => set('needs_arc', v)} />
+              </Field>
+
+              <Field label="Where would you like to work?" required error={errors.cities} group hint="Choose all that apply.">
+                <Chips multi options={CITIES} value={f.cities} onChange={(v) => set('cities', v)} />
+              </Field>
+            </>
+          )}
+
+          {step === 2 && (
+            <>
+              <Field label="What kind of job are you looking for?" required error={errors.job_types} group>
+                <Chips multi options={['Full-Time', 'Part-Time']} value={f.job_types} onChange={(v) => set('job_types', v)} />
+              </Field>
+
+              <Field label="When can you start?" required error={errors.available_from} htmlFor="available_from">
+                <input id="available_from" type="date" className={inputCls} value={f.available_from}
+                  onChange={(e) => set('available_from', e.target.value)} />
+              </Field>
+
+              <Field label="Which times are you available each week?" group
+                hint="Tap the boxes for the times you can teach. Skip this if you're fully flexible.">
+                <div className="overflow-x-auto -mx-1 px-1">
+                  <table className="w-full text-sm border-separate border-spacing-1">
+                    <thead>
+                      <tr>
+                        <th />
+                        {DAYS.map((d) => <th key={d.key} className="font-bold text-slate-600 pb-1">{d.label}</th>)}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {SLOTS.map((s) => (
+                        <tr key={s.key}>
+                          <th scope="row" className="text-left font-semibold text-slate-700 pr-2 whitespace-nowrap">
+                            {s.label}
+                            <span className="block text-[11px] font-normal text-slate-400">{s.hint}</span>
+                          </th>
+                          {DAYS.map((d) => {
+                            const on = (f.availability[d.key] || []).includes(s.key);
+                            return (
+                              <td key={d.key}>
+                                <button
+                                  type="button"
+                                  aria-pressed={on}
+                                  aria-label={`${d.label} ${s.label}`}
+                                  onClick={() => toggleSlot(d.key, s.key)}
+                                  className={`w-full h-11 min-w-[2.5rem] rounded-lg border transition ${
+                                    on ? 'bg-emerald-500 border-emerald-600' : 'bg-slate-50 border-slate-300 hover:border-emerald-500'
+                                  }`}
+                                />
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </Field>
+
+              {/* Hidden spam trap: real people never see or fill this in */}
+              <div aria-hidden="true" className="absolute -left-[9999px] h-0 overflow-hidden">
+                <label>Website<input tabIndex={-1} autoComplete="off" value={f.website} onChange={(e) => set('website', e.target.value)} /></label>
+              </div>
+
+              <div className="space-y-2">
+                <Banner tone="info">
+                  <strong>What schools will see:</strong> first name + last initial, photo, nationality, education,
+                  experience, introduction, visa status &amp; whether you need ARC sponsorship, where you're based, and
+                  availability. <strong>Never shown:</strong> your full name, email and phone.
+                </Banner>
+                <label className="flex items-start gap-3 cursor-pointer select-none">
+                  <input type="checkbox" className="mt-1 w-5 h-5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                    checked={f.consent} onChange={(e) => set('consent', e.target.checked)} />
+                  <span className="text-sm text-slate-700">
+                    I agree to show the details above to schools on this website, and I confirm the information is true.
+                  </span>
+                </label>
+                {errors.consent && <p role="alert" className="text-sm font-semibold text-red-600">{errors.consent}</p>}
+              </div>
+
+              {submitError && <Banner tone="error">{submitError}</Banner>}
+            </>
+          )}
+        </div>
+
+        {Object.keys(errors).length > 0 && (
+          <p role="alert" className="mt-5 text-sm font-semibold text-red-600">Please fix the highlighted items above.</p>
+        )}
+
+        <div className="mt-8 flex items-center justify-between gap-3">
+          {step > 0 ? (
+            <SecondaryButton onClick={() => { setErrors({}); setStep(step - 1); setTimeout(scrollTop, 0); }}>
+              <ChevronLeft className="w-5 h-5" /> Back
+            </SecondaryButton>
+          ) : <span />}
+
+          {step < STEPS.length - 1 ? (
+            <PrimaryButton onClick={next}>Next <ChevronRight className="w-5 h-5" /></PrimaryButton>
+          ) : (
+            <PrimaryButton onClick={submit} disabled={busy}>
+              {busy ? <><Loader2 className="w-5 h-5 animate-spin" /> Sending…</> : 'Send my profile'}
+            </PrimaryButton>
+          )}
+        </div>
+      </Panel>
+    </PageShell>
+  );
+}

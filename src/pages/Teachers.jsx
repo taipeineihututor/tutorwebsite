@@ -1,0 +1,253 @@
+import React, { useEffect, useMemo, useState } from 'react';
+import { Loader2, MapPin, GraduationCap, Briefcase, Plane, ShieldCheck, X, CheckCircle2, User } from 'lucide-react';
+import { listTeachers, submitInquiry } from '../lib/api';
+import {
+  CITIES, DAYS, SLOTS, VISA_SHORT, fmtDate, fmtMonth, experienceLabel,
+} from '../lib/constants';
+import { AvailabilityMini, Banner, Field, inputCls, PrimaryButton, SecondaryButton } from '../components/ui';
+
+const selectCls =
+  'w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition';
+
+const arcText = { yes: 'Needs ARC sponsorship', no: 'Can already work legally', unsure: 'ARC sponsorship: not sure yet' };
+
+function InquiryModal({ teacher, onClose }) {
+  const [f, setF] = useState({ from_name: '', school: '', from_email: '', message: '', website: '' });
+  const [errors, setErrors] = useState({});
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+  const [sent, setSent] = useState(false);
+  const set = (k, v) => setF((p) => ({ ...p, [k]: v }));
+
+  useEffect(() => {
+    const onKey = (e) => e.key === 'Escape' && onClose();
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  const submit = async () => {
+    const e = {};
+    if (f.from_name.trim().length < 2) e.from_name = 'Please enter your name.';
+    if (f.school.trim().length < 2) e.school = 'Please enter your school.';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.from_email.trim())) e.from_email = 'Please enter a valid email.';
+    if (f.message.trim().length < 5) e.message = 'Please write a short message.';
+    setErrors(e);
+    if (Object.keys(e).length) return;
+    if (f.website) { setSent(true); return; }
+    setBusy(true);
+    setErr('');
+    try {
+      await submitInquiry({
+        teacher_id: teacher.id,
+        from_name: f.from_name.trim(),
+        school: f.school.trim(),
+        from_email: f.from_email.trim(),
+        message: f.message.trim(),
+      });
+      setSent(true);
+    } catch {
+      setErr('Sorry, your message was not sent. Please try again in a moment.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/70 p-0 sm:p-4" role="dialog" aria-modal="true" aria-label={`Request an introduction to ${teacher.display_name}`}>
+      <div className="bg-white text-slate-900 w-full sm:max-w-lg rounded-t-3xl sm:rounded-3xl p-6 max-h-[92vh] overflow-y-auto">
+        <div className="flex items-start justify-between gap-4 mb-4">
+          <h2 className="text-xl font-black">Contact {teacher.display_name}</h2>
+          <button onClick={onClose} aria-label="Close" className="p-1 rounded-lg hover:bg-slate-100"><X className="w-6 h-6" /></button>
+        </div>
+
+        {sent ? (
+          <div className="text-center py-6 space-y-3">
+            <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto" />
+            <p className="font-bold text-lg">Message sent</p>
+            <p className="text-slate-600">We'll pass your message on to the teacher and they can reply to you directly.</p>
+            <SecondaryButton onClick={onClose}>Close</SecondaryButton>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <p className="text-sm text-slate-600">
+              To protect teachers' privacy, messages go through us first. We'll forward yours.
+            </p>
+            <Field label="Your name" required error={errors.from_name} htmlFor="iq_name">
+              <input id="iq_name" className={inputCls} value={f.from_name} onChange={(e) => set('from_name', e.target.value)} />
+            </Field>
+            <Field label="School" required error={errors.school} htmlFor="iq_school">
+              <input id="iq_school" className={inputCls} value={f.school} onChange={(e) => set('school', e.target.value)} />
+            </Field>
+            <Field label="Your email" required error={errors.from_email} htmlFor="iq_email">
+              <input id="iq_email" type="email" className={inputCls} value={f.from_email} onChange={(e) => set('from_email', e.target.value)} />
+            </Field>
+            <Field label="Message" required error={errors.message} htmlFor="iq_msg" hint="Say a little about the job and how to reach you.">
+              <textarea id="iq_msg" rows={4} maxLength={2000} className={inputCls} value={f.message} onChange={(e) => set('message', e.target.value)} />
+            </Field>
+            <div aria-hidden="true" className="absolute -left-[9999px] h-0 overflow-hidden">
+              <label>Website<input tabIndex={-1} autoComplete="off" value={f.website} onChange={(e) => set('website', e.target.value)} /></label>
+            </div>
+            {err && <Banner tone="error">{err}</Banner>}
+            <div className="flex justify-end gap-3">
+              <SecondaryButton onClick={onClose}>Cancel</SecondaryButton>
+              <PrimaryButton onClick={submit} disabled={busy}>
+                {busy ? <><Loader2 className="w-5 h-5 animate-spin" /> Sending…</> : 'Send message'}
+              </PrimaryButton>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function TeacherCard({ t, onContact }) {
+  const where = t.cities?.length ? t.cities.join(', ') : '';
+  return (
+    <article className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 sm:p-6 hover:border-emerald-500/40 transition">
+      <div className="flex gap-4">
+        <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-slate-800 overflow-hidden shrink-0 flex items-center justify-center">
+          {t.photo_url ? (
+            <img src={t.photo_url} alt={`Photo of ${t.display_name}`} loading="lazy" className="w-full h-full object-cover" />
+          ) : (
+            <User className="w-10 h-10 text-slate-600" />
+          )}
+        </div>
+        <div className="min-w-0">
+          <h3 className="text-lg font-black text-white">{t.display_name}</h3>
+          <p className="text-slate-300 text-sm">{t.nationality}{t.native_english === 'yes' ? ' · Native English speaker' : ''}</p>
+          <div className="mt-2 flex flex-wrap gap-2 text-xs font-semibold">
+            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border ${t.needs_arc === 'yes' ? 'bg-amber-500/10 text-amber-300 border-amber-500/30' : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'}`}>
+              <ShieldCheck className="w-3.5 h-3.5" /> {arcText[t.needs_arc] || 'ARC: not specified'}
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-800 text-slate-200">
+              <Plane className="w-3.5 h-3.5 text-emerald-400" />
+              {t.in_taiwan
+                ? `In Taiwan${t.visa_status ? ` · ${VISA_SHORT[t.visa_status] || ''}` : ''}${t.stay_until ? ` · until ${fmtMonth(t.stay_until)}` : ''}`
+                : `Coming from abroad${t.arrival_date ? ` · from ${fmtMonth(t.arrival_date)}` : ''}`}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <p className="mt-4 text-slate-300 text-sm leading-relaxed whitespace-pre-line">{t.bio}</p>
+
+      <div className="mt-4 grid sm:grid-cols-2 gap-x-6 gap-y-2 text-sm text-slate-300">
+        {t.education && <p className="flex items-center gap-2"><GraduationCap className="w-4 h-4 text-emerald-400 shrink-0" />{t.education}</p>}
+        {t.experience && <p className="flex items-center gap-2"><Briefcase className="w-4 h-4 text-emerald-400 shrink-0" />{experienceLabel(t.experience)}</p>}
+        {where && <p className="flex items-center gap-2 sm:col-span-2"><MapPin className="w-4 h-4 text-emerald-400 shrink-0" />Wants to work in: {where}</p>}
+      </div>
+
+      {(t.subjects?.length > 0 || t.certificates?.length > 0) && (
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {[...(t.subjects || []), ...(t.certificates || []).filter((c) => c !== 'None yet')].map((s) => (
+            <span key={s} className="bg-slate-800 text-slate-200 text-xs font-medium px-2.5 py-1 rounded-full">{s}</span>
+          ))}
+        </div>
+      )}
+
+      <div className="mt-4 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+        <div className="space-y-1.5">
+          <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
+            {(t.job_types || []).join(' / ') || 'Availability'}
+            {t.available_from ? ` · can start ${fmtDate(t.available_from)}` : ''}
+          </p>
+          {Object.keys(t.availability || {}).length > 0 && (
+            <AvailabilityMini availability={t.availability} days={DAYS} slots={SLOTS} />
+          )}
+        </div>
+        <PrimaryButton onClick={() => onContact(t)} className="sm:self-end">Contact this teacher</PrimaryButton>
+      </div>
+    </article>
+  );
+}
+
+export default function Teachers() {
+  const [teachers, setTeachers] = useState(null);
+  const [loadError, setLoadError] = useState('');
+  const [city, setCity] = useState('All Locations');
+  const [where, setWhere] = useState('any'); // any | in | abroad
+  const [arc, setArc] = useState('any'); // any | needs | ready
+  const [contacting, setContacting] = useState(null);
+
+  useEffect(() => {
+    listTeachers().then(setTeachers).catch(() => {
+      setLoadError("We couldn't load teacher profiles right now. Please refresh in a moment.");
+      setTeachers([]);
+    });
+  }, []);
+
+  const filtered = useMemo(
+    () =>
+      (teachers || []).filter((t) => {
+        if (city !== 'All Locations' && !(t.cities || []).includes(city) && !(t.cities || []).includes('Other / Flexible')) return false;
+        if (where === 'in' && !t.in_taiwan) return false;
+        if (where === 'abroad' && t.in_taiwan) return false;
+        if (arc === 'needs' && t.needs_arc !== 'yes') return false;
+        if (arc === 'ready' && t.needs_arc !== 'no') return false;
+        return true;
+      }),
+    [teachers, city, where, arc],
+  );
+
+  return (
+    <section className="px-4 sm:px-6 lg:px-8 py-10 sm:py-14 bg-gradient-to-b from-[#0f172a] to-[#090d16]">
+      <div className="max-w-5xl mx-auto">
+        <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-white mb-2">Find teachers</h1>
+        <p className="text-slate-300 text-lg mb-8">Every profile has been reviewed. Contact details stay private – we'll forward your message.</p>
+
+        <div className="bg-white text-slate-900 rounded-3xl p-6 shadow-2xl shadow-emerald-500/10 grid sm:grid-cols-3 gap-4 mb-8">
+          <div className="space-y-1.5">
+            <label htmlFor="f_city" className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Wants to work in</label>
+            <select id="f_city" className={selectCls} value={city} onChange={(e) => setCity(e.target.value)}>
+              <option>All Locations</option>
+              {CITIES.map((c) => <option key={c}>{c}</option>)}
+            </select>
+          </div>
+          <div className="space-y-1.5">
+            <label htmlFor="f_where" className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Currently</label>
+            <select id="f_where" className={selectCls} value={where} onChange={(e) => setWhere(e.target.value)}>
+              <option value="any">Anywhere</option>
+              <option value="in">Already in Taiwan</option>
+              <option value="abroad">Coming from abroad</option>
+            </select>
+          </div>
+          <div className="space-y-1.5">
+            <label htmlFor="f_arc" className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Work permit</label>
+            <select id="f_arc" className={selectCls} value={arc} onChange={(e) => setArc(e.target.value)}>
+              <option value="any">Any</option>
+              <option value="needs">Needs ARC sponsorship</option>
+              <option value="ready">Can already work legally</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          {loadError && <Banner tone="error">{loadError}</Banner>}
+          {teachers === null && (
+            <p className="flex items-center justify-center gap-2 text-slate-400 py-10"><Loader2 className="w-5 h-5 animate-spin" /> Loading profiles…</p>
+          )}
+          {teachers !== null && !loadError && (
+            <p className="text-sm font-semibold text-slate-400">{filtered.length} {filtered.length === 1 ? 'teacher' : 'teachers'}</p>
+          )}
+          {teachers !== null && filtered.length === 0 && !loadError && (
+            <div className="text-center py-12 px-4 border border-dashed border-slate-700 rounded-2xl">
+              <p className="text-lg font-bold text-white">
+                {teachers.length === 0 ? 'No teacher profiles are live yet.' : 'No teachers match these filters.'}
+              </p>
+              {teachers.length === 0 && (
+                <>
+                  <p className="text-slate-400 mt-1">Are you a teacher? Create your profile.</p>
+                  <a href="#/join" className="inline-block mt-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-5 py-2.5 rounded-xl font-bold transition">Create my profile</a>
+                </>
+              )}
+            </div>
+          )}
+          {filtered.map((t) => <TeacherCard key={t.id} t={t} onContact={setContacting} />)}
+        </div>
+      </div>
+
+      {contacting && <InquiryModal teacher={contacting} onClose={() => setContacting(null)} />}
+    </section>
+  );
+}
