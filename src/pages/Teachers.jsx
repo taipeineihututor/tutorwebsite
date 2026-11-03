@@ -171,6 +171,7 @@ function TeacherCard({ t, onContact }) {
           <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
             {(t.job_types || []).join(' / ') || 'Availability'}
             {t.available_from ? ` · can start ${fmtDate(t.available_from)}` : ''}
+            {t.available_until ? ` · available until ${fmtDate(t.available_until)}` : ''}
           </p>
           {Object.keys(t.availability || {}).length > 0 && (
             <AvailabilityMini availability={t.availability} days={DAYS} slots={SLOTS} />
@@ -249,7 +250,7 @@ export default function Teachers() {
         if (checks.needsArc && t.needs_arc !== 'yes') return false;
         if (checks.cert && !(t.certificates || []).includes('TEFL / TESOL / CELTA')) return false;
         if (checks.video && !(t.video_url && isVideoLink(t.video_url))) return false;
-        if (checks.now && !(t.available_from && t.available_from <= today)) return false;
+        if (checks.now && !(t.available_from && t.available_from <= today && (!t.available_until || t.available_until >= today))) return false;
         if (checks.full && !(t.job_types || []).includes('Full-Time')) return false;
         if (checks.part && !(t.job_types || []).includes('Part-Time')) return false;
         return true;

@@ -15,7 +15,7 @@ const initial = {
   full_name: '', email: '', phone: '', nationality: '', native_english: '',
   education: '', certificates: [], experience: '', subjects: [], bio: '', video_url: '',
   in_taiwan: '', visa_status: '', stay_until: '', arrival_date: '', needs_arc: '', cities: [],
-  job_types: [], available_from: '', availability: {}, availability_notes: {},
+  job_types: [], available_from: '', available_until: '', availability: {}, availability_notes: {},
   consent: false, website: '', // "website" is a hidden trap for spam bots
 };
 
@@ -46,6 +46,7 @@ function validate(step, f) {
   if (step === 2) {
     if (f.job_types.length === 0) e.job_types = 'Pick full-time, part-time, or both.';
     if (!f.available_from) e.available_from = 'Please enter the date you can start.';
+    if (f.available_until && f.available_from && f.available_until < f.available_from) e.available_until = 'This date must be after the date you can start.';
     if (!f.consent) e.consent = 'Please tick the box to continue.';
   }
   return e;
@@ -131,6 +132,7 @@ export default function TeacherForm() {
           needs_arc: f.needs_arc,
           job_types: f.job_types,
           available_from: f.available_from || null,
+          available_until: f.available_until || null,
           availability: cleanAvailability,
           availability_notes: Object.fromEntries(
             DAYS.map((d) => [d.key, (f.availability_notes[d.key] || '').trim()]).filter(([, v]) => v),
@@ -332,6 +334,12 @@ export default function TeacherForm() {
               <Field label="When can you start?" required error={errors.available_from} htmlFor="available_from">
                 <input id="available_from" type="date" className={inputCls} value={f.available_from}
                   onChange={(e) => set('available_from', e.target.value)} />
+              </Field>
+
+              <Field label="Until when are you available in Taiwan?" error={errors.available_until} htmlFor="available_until"
+                hint="Optional. If you plan to leave Taiwan, enter the date. Leave it empty if you have no end date.">
+                <input id="available_until" type="date" className={inputCls} value={f.available_until} min={f.available_from || undefined}
+                  onChange={(e) => set('available_until', e.target.value)} />
               </Field>
 
               <Field label="Which times are you available each week?" group

@@ -226,3 +226,16 @@ grant select on public.public_teachers to anon, authenticated;
 
 -- Upgrade: jobs can start ASAP (already applied to the live project).
 alter table public.jobs add column if not exists start_asap boolean not null default false;
+
+-- Upgrade: teachers can say until when they are available (already applied to the live project).
+alter table public.teachers add column if not exists available_until date;
+create or replace view public.public_teachers as
+  select
+    id, created_at,
+    public.display_name(full_name) as display_name,
+    nationality, native_english, education, certificates, experience, subjects,
+    bio, photo_url, cities, in_taiwan, visa_status, stay_until, arrival_date,
+    needs_arc, job_types, available_from, availability, availability_notes, video_url, available_until
+  from public.teachers
+  where status = 'approved';
+grant select on public.public_teachers to anon, authenticated;

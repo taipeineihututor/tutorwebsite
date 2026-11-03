@@ -259,10 +259,10 @@ export default function JobForm() {
               onChange={(e) => set('salary', e.target.value)} />
           </Field>
 
-          <Field label="Will your school sponsor the work permit & ARC?" required error={errors.arc_offered} group>
+          <Field label="Can your school offer a Work Permit (support ARC)?" required error={errors.arc_offered} group>
             <Choice
               options={[
-                { value: 'yes', label: 'Yes – we sponsor the work permit and ARC' },
+                { value: 'yes', label: 'Yes – we can offer a Work Permit and support the ARC' },
                 { value: 'no', label: 'No – candidates must already be able to work in Taiwan' },
               ]}
               value={f.arc_offered} onChange={(v) => set('arc_offered', v)}

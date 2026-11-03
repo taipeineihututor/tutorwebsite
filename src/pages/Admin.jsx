@@ -38,6 +38,7 @@ function teacherRows(t) {
     ['Wants to work in', (t.cities || []).join(', ')],
     ['Job types', (t.job_types || []).join(', ')],
     ['Can start', fmtDate(t.available_from)],
+    ['Available until', fmtDate(t.available_until)],
     ['Weekly availability', availText(t.availability)],
     ['Hours by day', DAYS.filter((d) => t.availability_notes?.[d.key]).map((d) => `${d.label}: ${t.availability_notes[d.key]}`).join('\n')],
     ['Intro video', t.video_url],

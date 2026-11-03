@@ -49,7 +49,7 @@ function JobCard({ job, defaultOpen = false }) {
         </div>
         {job.arc_offered === 'yes' && (
           <span className="inline-flex items-center gap-1.5 self-start bg-emerald-50 text-emerald-900 border border-emerald-200 px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap">
-            <CheckCircle2 className="w-3.5 h-3.5" /> ARC sponsorship
+            <CheckCircle2 className="w-3.5 h-3.5" /> Can offer Work Permit (ARC)
           </span>
         )}
       </div>
@@ -214,12 +214,12 @@ export default function Home() {
             <a href="#/post-job" className="group rounded-2xl p-6 bg-white hover:bg-slate-50 border border-white text-slate-900 shadow-lg shadow-black/20 transition">
               <p className="text-xs font-bold uppercase tracking-wider text-emerald-700">For schools</p>
               <p className="text-2xl font-black mt-1">Post a job</p>
-              <p className="text-sm font-medium mt-1 text-slate-600">Describe the role and say if you sponsor ARC.</p>
+              <p className="text-sm font-medium mt-1 text-slate-600">Describe the role and say if you can offer a Work Permit (support ARC).</p>
             </a>
           </div>
 
           <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-sm font-medium text-slate-300 mt-10">
-            {['Free to post', 'Every post is reviewed before it goes live', 'ARC sponsorship shown up front', 'Teacher contact details stay private'].map((t) => (
+            {['Free to post', 'Every post is reviewed before it goes live', 'Work Permit (ARC) support shown up front', 'Teacher contact details stay private'].map((t) => (
               <div key={t} className="flex items-center space-x-2 bg-white text-slate-800 px-4 py-2 rounded-xl border border-white shadow-md shadow-black/10">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                 <span>{t}</span>
@@ -283,7 +283,7 @@ export default function Home() {
               <label className="flex items-center space-x-2 cursor-pointer select-none">
                 <input type="checkbox" checked={arcOnly} onChange={(e) => setArcOnly(e.target.checked)}
                   className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-600" />
-                <span className="text-sm font-semibold text-slate-700">Show ARC & Work Permit Provided Only</span>
+                <span className="text-sm font-semibold text-slate-700">Can offer Work Permit (support ARC)</span>
               </label>
               <div className="flex items-center space-x-4 text-sm">
                 <button onClick={reset} className="text-slate-500 hover:text-slate-900 font-semibold transition">Reset Filters</button>
