@@ -135,3 +135,7 @@ export const CITY_COORDS = {
   'Tainan City': [22.9999, 120.2270],
   'Kaohsiung City': [22.6273, 120.3014],
 };
+
+// Intro videos: only YouTube and Google Drive links are accepted.
+const VIDEO_HOST = /^https:\/\/((www\.|m\.)?youtube\.com\/|youtu\.be\/|youtube-nocookie\.com\/|drive\.google\.com\/)/i;
+export const isVideoLink = (v) => VIDEO_HOST.test((v || '').trim());

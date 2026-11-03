@@ -97,7 +97,7 @@ export default function Legal() {
 
         <H3>What we collect</H3>
         <UL items={[
-          'Teachers: name, email, phone or LINE (optional), nationality, education, certificates, experience, an introduction, a photo (optional), whether you are in Taiwan, visa and stay-until date, whether you need ARC sponsorship, where you want to work, and when you are available (including any hours you list for each day).',
+          'Teachers: name, email, phone or LINE (optional), nationality, education, certificates, experience, an introduction, a photo (optional), a link to an intro video (optional), whether you are in Taiwan, visa and stay-until date, whether you need ARC sponsorship, where you want to work, and when you are available (including any hours you list for each day).',
           'Schools: school name and type, contact name and email, an application link (optional), a logo (optional), up to 3 school locations (address and optional Google Maps link), and the job details.',
           'Messages: if a school contacts a teacher through the site, we receive the sender’s name, school, email and message.',
           'Technical data: like most websites, our hosting provider sees basic information such as your IP address when you visit.',
@@ -105,7 +105,7 @@ export default function Legal() {
 
         <H3>What is public and what is private</H3>
         <UL items={[
-          'Teacher profile, once approved, is public: first name and last initial, photo, nationality, education, experience, introduction, visa type and stay-until date, whether you need ARC sponsorship, where you want to work, and availability.',
+          'Teacher profile, once approved, is public: first name and last initial, photo, intro video link, nationality, education, experience, introduction, visa type and stay-until date, whether you need ARC sponsorship, where you want to work, and availability.',
           'Teacher details that are never shown: full name, email and phone or LINE. Only the site admin can see them.',
           'Job post, once approved, is public, including the school name, logo, locations, the contact person’s name and the contact email, so that teachers can apply.',
         ]} />

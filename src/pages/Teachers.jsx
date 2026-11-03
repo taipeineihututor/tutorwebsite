@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Loader2, MapPin, GraduationCap, Briefcase, Plane, ShieldCheck, X, CheckCircle2, User } from 'lucide-react';
+import { Loader2, MapPin, GraduationCap, Briefcase, Plane, ShieldCheck, X, CheckCircle2, User, Play } from 'lucide-react';
 import { listTeachers, submitInquiry } from '../lib/api';
 import {
-  CITIES, DAYS, SLOTS, VISA_SHORT, fmtDate, fmtMonth, experienceLabel,
+  CITIES, DAYS, SLOTS, isVideoLink, VISA_SHORT, fmtDate, fmtMonth, experienceLabel,
 } from '../lib/constants';
 import { AvailabilityMini, Banner, Field, inputCls, PrimaryButton, SecondaryButton } from '../components/ui';
 
@@ -131,6 +131,12 @@ function TeacherCard({ t, onContact }) {
       </div>
 
       <p className="mt-4 text-slate-700 text-sm leading-relaxed whitespace-pre-line">{t.bio}</p>
+      {t.video_url && isVideoLink(t.video_url) && (
+        <a href={t.video_url} target="_blank" rel="noopener noreferrer nofollow"
+          className="mt-3 inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-xl text-sm font-bold transition">
+          <Play className="w-4 h-4 text-emerald-400" /> Watch intro video
+        </a>
+      )}
 
       <div className="mt-4 grid sm:grid-cols-2 gap-x-6 gap-y-2 text-sm text-slate-700">
         {t.education && <p className="flex items-center gap-2"><GraduationCap className="w-4 h-4 text-emerald-600 shrink-0" />{t.education}</p>}

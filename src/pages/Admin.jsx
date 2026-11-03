@@ -40,6 +40,7 @@ function teacherRows(t) {
     ['Can start', fmtDate(t.available_from)],
     ['Weekly availability', availText(t.availability)],
     ['Hours by day', DAYS.filter((d) => t.availability_notes?.[d.key]).map((d) => `${d.label}: ${t.availability_notes[d.key]}`).join('\n')],
+    ['Intro video', t.video_url],
     ['Introduction', t.bio],
   ];
 }

@@ -4,7 +4,7 @@ import {
   Field, Chips, Choice, inputCls, PrimaryButton, SecondaryButton, Panel, PageShell, Banner,
 } from '../components/ui';
 import {
-  CITIES, SUBJECTS, EDUCATION, CERTIFICATES, EXPERIENCE, VISA_STATUSES, ARC_NEEDS, DAYS, SLOTS,
+  CITIES, SUBJECTS, EDUCATION, CERTIFICATES, EXPERIENCE, VISA_STATUSES, isVideoLink, ARC_NEEDS, DAYS, SLOTS,
 } from '../lib/constants';
 import { submitTeacher } from '../lib/api';
 import { resizeImage } from '../lib/image';
@@ -13,7 +13,7 @@ const STEPS = ['About you', 'Taiwan & visa', 'Availability'];
 
 const initial = {
   full_name: '', email: '', phone: '', nationality: '', native_english: '',
-  education: '', certificates: [], experience: '', subjects: [], bio: '',
+  education: '', certificates: [], experience: '', subjects: [], bio: '', video_url: '',
   in_taiwan: '', visa_status: '', stay_until: '', arrival_date: '', needs_arc: '', cities: [],
   job_types: [], available_from: '', availability: {}, availability_notes: {},
   consent: false, website: '', // "website" is a hidden trap for spam bots
@@ -31,6 +31,7 @@ function validate(step, f) {
     if (!f.education) e.education = 'Please choose your highest education.';
     if (!f.experience) e.experience = 'Please choose your teaching experience.';
     if (f.subjects.length === 0) e.subjects = 'Pick at least one age group or subject.';
+    if (f.video_url.trim() && !isVideoLink(f.video_url)) e.video_url = 'Please paste a YouTube or Google Drive link (starting with https://).';
     if (f.bio.trim().length < 20) e.bio = 'Please write at least a couple of sentences about yourself.';
   }
   if (step === 1) {
@@ -121,6 +122,7 @@ export default function TeacherForm() {
           experience: f.experience,
           subjects: f.subjects,
           bio: f.bio.trim(),
+          video_url: f.video_url.trim() || null,
           cities: f.cities,
           in_taiwan: inTaiwan,
           visa_status: inTaiwan ? f.visa_status : null,
@@ -266,6 +268,13 @@ export default function TeacherForm() {
                 <textarea id="bio" rows={5} maxLength={1200} className={inputCls} value={f.bio}
                   onChange={(e) => set('bio', e.target.value)} />
                 <p className="text-xs text-slate-400 text-right">{f.bio.length}/1200</p>
+              </Field>
+
+              <Field label="Intro video link" error={errors.video_url} htmlFor="video_url"
+                hint="Optional. Paste a link to a short video of you (YouTube or Google Drive). Schools can watch it on your profile. For Google Drive, set sharing to “Anyone with the link”.">
+                <input id="video_url" type="url" inputMode="url" className={inputCls} value={f.video_url} maxLength={300}
+                  placeholder="https://youtube.com/…  or  https://drive.google.com/…"
+                  onChange={(e) => set('video_url', e.target.value)} />
               </Field>
             </>
           )}
