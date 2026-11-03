@@ -201,8 +201,8 @@ export default function Home() {
           </div>
 
           <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-white mb-10 leading-tight">
-            Teach English & Launch Your Adventure <br className="hidden sm:inline" />
-            in <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-emerald-200">Taiwan</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-emerald-200">Taiwan&apos;s</span> Teaching Jobs <br className="hidden sm:inline" />
+            &amp; Teacher Community
           </h1>
 
           <div className="grid sm:grid-cols-2 gap-4 max-w-3xl mx-auto text-left">
