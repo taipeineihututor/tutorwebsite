@@ -147,7 +147,7 @@ export default function Home() {
           </div>
 
           <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-sm font-medium text-slate-300 mt-10">
-            {['Every post is reviewed before it goes live', 'ARC sponsorship shown up front', 'Teacher contact details stay private'].map((t) => (
+            {['Free to post', 'Every post is reviewed before it goes live', 'ARC sponsorship shown up front', 'Teacher contact details stay private'].map((t) => (
               <div key={t} className="flex items-center space-x-2 bg-white text-slate-800 px-4 py-2 rounded-xl border border-white shadow-md shadow-black/10">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                 <span>{t}</span>

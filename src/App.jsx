@@ -5,6 +5,7 @@ import Teachers from './pages/Teachers';
 import TeacherForm from './pages/TeacherForm';
 import JobForm from './pages/JobForm';
 import Admin from './pages/Admin';
+import Legal from './pages/Legal';
 import { useRoute } from './lib/router';
 
 export default function App() {
@@ -20,6 +21,11 @@ export default function App() {
       break;
     case '/post-job':
       page = <JobForm />;
+      break;
+    case '/legal':
+    case '/terms':
+    case '/privacy':
+      page = <Legal />;
       break;
     case '/admin':
       page = <Admin />;

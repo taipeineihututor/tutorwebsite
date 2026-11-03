@@ -212,7 +212,7 @@ export default function JobForm() {
               <input type="checkbox" className="mt-1 w-5 h-5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-600"
                 checked={f.consent} onChange={(e) => set('consent', e.target.checked)} />
               <span className="text-sm text-slate-700">
-                I'm allowed to recruit on behalf of this school, and I agree to show these details publicly.
+                I'm allowed to recruit on behalf of this school, and I agree to show these details publicly. I have read the <a href="#/legal" target="_blank" rel="noreferrer" className="underline font-semibold">Terms &amp; Privacy</a>.
               </span>
             </label>
             {errors.consent && <p role="alert" className="text-sm font-semibold text-red-600">{errors.consent}</p>}
