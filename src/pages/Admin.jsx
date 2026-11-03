@@ -190,7 +190,7 @@ function Row({ kind, item, all, lastActive, onSet, onDelete, onNote, onTouch, bu
   const dupes = (all || []).filter((o) => o.id !== item.id && (isTeacher
     ? norm(o.email) === norm(item.email)
     : isSchool
-      ? o.tax_id === item.tax_id
+      ? !!item.tax_id && o.tax_id === item.tax_id
       : norm(o.school_name) === norm(item.school_name) && norm(o.title) === norm(item.title)));
   const rows = (isTeacher ? teacherRows(item) : isSchool ? schoolRows(item) : jobRows(item)).filter(([, v]) => v);
   // Who viewed whose contact details
@@ -198,7 +198,7 @@ function Row({ kind, item, all, lastActive, onSet, onDelete, onNote, onTouch, bu
   if (isTeacher && mine.length) rows.push(['Contact viewed by', mine.map((v) => `${names.schools[v.school_id] || 'a school'} (${new Date(v.viewed_at).toLocaleDateString()})`).join('\n')]);
   if (isSchool && mine.length) rows.push([`Teachers viewed (${mine.length})`, mine.map((v) => `${names.teachers[v.teacher_id] || 'a teacher'} (${new Date(v.viewed_at).toLocaleDateString()})`).join('\n')]);
   const title = isTeacher ? item.full_name : isSchool ? item.institution_name : item.title;
-  const sub = isTeacher ? `${item.nationality} · ${item.email}` : isSchool ? `${item.institution_type || ''} · tax ID ${item.tax_id} · ${item.city || ''}` : `${item.school_name} · ${item.city}`;
+  const sub = isTeacher ? `${item.nationality} · ${item.email}` : isSchool ? `${item.institution_type || ''} · ${item.tax_id ? `tax ID ${item.tax_id}` : 'no tax ID'} · ${item.city || ''}` : `${item.school_name} · ${item.city}`;
   const [proofErr, setProofErr] = useState('');
   const openProof = async () => {
     setProofErr('');

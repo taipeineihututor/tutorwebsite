@@ -53,7 +53,7 @@ function SignIn({ onDone }) {
         <div className="grid sm:grid-cols-3 gap-3 mb-6 text-sm text-slate-700">
           {[
             ['1. Create a login', 'Use a work email address of your institution.'],
-            ['2. Tell us who you are', 'Name, tax ID and any one way to verify you: a document, a school email address, or another credential. Only our admin sees this.'],
+            ['2. Tell us who you are', 'Name, plus your tax ID (preferred) or any one way to verify you: a school email address, a document, or another credential. Only our admin sees this.'],
             ['3. We verify, you post', 'Usually within a day or two. Then you can post jobs (up to 3 at a time) and contact teachers.'],
           ].map(([h, t]) => (
             <div key={h} className="rounded-2xl bg-slate-50 border border-slate-200 p-4">
@@ -104,7 +104,7 @@ function RegistrationForm({ session, existing, onDone }) {
     const e = {};
     if (f.institution_name.trim().length < 2) e.institution_name = 'Please enter the full name of your institution.';
     if (!f.institution_type) e.institution_type = 'Please choose a type.';
-    if (!/^\d{8}$/.test(f.tax_id.trim())) e.tax_id = 'The Taiwan business tax ID (統一編號) has 8 digits.';
+    if (f.tax_id.trim() && !/^\d{8}$/.test(f.tax_id.trim())) e.tax_id = 'The Taiwan business tax ID (統一編號) has 8 digits. Leave it empty if you do not have one.';
     if (f.website.trim() && !linkOk(f.website.trim())) e.website = 'Links should start with https://';
     if (!f.city) e.city = 'Please choose a city.';
     if (f.address.trim().length < 5) e.address = 'Please enter the address of your institution.';
@@ -113,8 +113,8 @@ function RegistrationForm({ session, existing, onDone }) {
     const oe = f.official_email.trim();
     if (oe && !emailOk(oe)) e.official_email = 'Please enter a valid email address.';
     else if (oe && FREE_MAIL.test(oe)) e.official_email = 'This looks like a personal email (Gmail, Yahoo…). Please use an address on your institution\'s own domain, e.g. name@yourschool.edu.tw.';
-    if (!proof && !existing?.proof_path && !oe && f.other_credential.trim().length < 5) {
-      e.verify = 'Please give us at least ONE way to verify your institution: a document, an email address on your institution\'s own domain, or another credential.';
+    if (!proof && !existing?.proof_path && !oe && !f.tax_id.trim() && f.other_credential.trim().length < 5) {
+      e.verify = 'Please give us at least ONE way to verify your institution: a tax ID, a document, an email address on your institution\'s own domain, or another credential.';
     }
     if (!f.consent) e.consent = 'Please tick the box to continue.';
     setErrors(e);
@@ -123,7 +123,7 @@ function RegistrationForm({ session, existing, onDone }) {
     setSubmitError('');
     try {
       await school.register(session.userId, {
-        institution_name: f.institution_name.trim(), institution_type: f.institution_type, tax_id: f.tax_id.trim(),
+        institution_name: f.institution_name.trim(), institution_type: f.institution_type, tax_id: f.tax_id.trim() || null,
         website: f.website.trim() || null, city: f.city, address: f.address.trim(),
         contact_name: f.contact_name.trim(), contact_title: f.contact_title.trim() || null, phone: f.phone.trim(),
         message: f.message.trim() || null,
@@ -166,7 +166,7 @@ function RegistrationForm({ session, existing, onDone }) {
             {SCHOOL_TYPES.map((o) => <option key={o}>{o}</option>)}
           </select>
         </Field>
-        <Field label="Business tax ID (統一編號)" required error={errors.tax_id} htmlFor="r_tax" hint="8 digits. Public schools can use their organisation code.">
+        <Field label="Business tax ID (統一編號)" error={errors.tax_id} htmlFor="r_tax" hint="Optional but preferred: it lets us check you on the official business registry. 8 digits.">
           <input id="r_tax" inputMode="numeric" maxLength={8} className={inputCls} value={f.tax_id} onChange={(e) => set('tax_id', e.target.value.replace(/\D/g, ''))} />
         </Field>
       </div>
@@ -201,7 +201,7 @@ function RegistrationForm({ session, existing, onDone }) {
       <div className={`rounded-2xl border p-4 space-y-5 ${errors.verify ? 'border-red-300 bg-red-50' : 'border-slate-200 bg-slate-50'}`}>
         <div>
           <p className="text-sm font-black text-slate-900">How can we verify you? <span className="text-emerald-600">*</span></p>
-          <p className="text-sm text-slate-600">Give us <strong>at least one</strong> of the three below. A license is not required. More than one makes it faster.</p>
+          <p className="text-sm text-slate-600">Along with the tax ID above (preferred), give us <strong>at least one</strong> of the three below, unless you entered a tax ID. A license is not required. More than one makes it faster.</p>
           {errors.verify && <p role="alert" className="mt-2 text-sm font-semibold text-red-600">{errors.verify}</p>}
         </div>
 
