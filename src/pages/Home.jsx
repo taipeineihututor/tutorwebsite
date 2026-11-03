@@ -5,6 +5,7 @@ import {
 import { listJobs } from '../lib/api';
 import { CITIES, SCHOOL_TYPES, CITY_COORDS, fmtDate, mapsUrl } from '../lib/constants';
 import { Banner } from '../components/ui';
+import { geocodeBest, readGeoCache, writeGeoCache, sleep } from '../lib/geocode';
 
 const selectCls =
   'w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:bg-white appearance-none transition';
@@ -12,10 +13,12 @@ const selectCls =
 const JobsMap = lazy(() => import('../components/JobsMap'));
 
 // One pin per location. Jobs without a placed address appear at their city centre (approximate).
-function mapPoints(jobs) {
+function mapPoints(jobs, geo = {}) {
   const pts = [];
   jobs.forEach((job, ji) => {
-    const exact = (job.locations || []).filter((l) => Number.isFinite(l.lat) && Number.isFinite(l.lng));
+    const exact = (job.locations || [])
+      .map((l) => (Number.isFinite(l.lat) && Number.isFinite(l.lng) ? l : geo[l.address] ? { ...l, ...geo[l.address] } : null))
+      .filter(Boolean);
     if (exact.length) {
       exact.forEach((l, i) => pts.push({ key: `${job.id}-${i}`, lat: l.lat, lng: l.lng, approx: false, label: [l.label, l.address].filter(Boolean).join(' – '), job }));
     } else if (CITY_COORDS[job.city]) {
@@ -156,7 +159,27 @@ export default function Home() {
     });
   }, [jobs, searchTerm, selectedLocation, selectedSchoolType, selectedJobType, arcOnly]);
 
-  const points = useMemo(() => mapPoints(filtered), [filtered]);
+  // Ads posted before addresses were placed on the map: look the addresses up now (once, then cached).
+  const [geo, setGeo] = useState(readGeoCache);
+  useEffect(() => {
+    if (view !== 'map' || !jobs) return undefined;
+    let stop = false;
+    const todo = [...new Set(jobs.flatMap((j) => (j.locations || []).filter((l) => l.address && !Number.isFinite(l.lat) && !(l.address in geo)).map((l) => l.address)))].slice(0, 12);
+    (async () => {
+      const cache = { ...readGeoCache() };
+      for (const addr of todo) {
+        if (stop) return;
+        const pos = await geocodeBest(addr);
+        cache[addr] = pos; // null = could not be found; do not keep retrying
+        writeGeoCache(cache);
+        if (!stop) setGeo({ ...cache });
+        await sleep(1100);
+      }
+    })();
+    return () => { stop = true; };
+  }, [view, jobs]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const points = useMemo(() => mapPoints(filtered, geo), [filtered, geo]);
   const selectedJob = filtered.find((j) => j.id === selectedId) || null;
   useEffect(() => {
     if (selectedJob) selectedRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });

@@ -23,3 +23,37 @@ export async function geocodeAddress(address, timeoutMs = 5000) {
     clearTimeout(timer);
   }
 }
+
+// Tries the full address first, then simpler versions (without floor, house number, lane),
+// because OpenStreetMap often knows the street but not every building number.
+export function addressVariants(address) {
+  const a = (address || '').trim();
+  const out = [a];
+  const noFloor = a.replace(/[\s,]*(\d+\s*樓.*|\d+\s*F\b.*|[,\s]*(\d+(st|nd|rd|th)\s+)?floor.*)$/i, '').trim();
+  const noNumber = noFloor.replace(/\d+(-\d+)?\s*號.*$/, '').trim();
+  const noLane = noNumber.replace(/\d+\s*巷.*$/, '').trim();
+  [noFloor, noNumber, noLane].forEach((v) => { if (v.length >= 4 && !out.includes(v)) out.push(v); });
+  return out.slice(0, 4);
+}
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+export async function geocodeBest(address) {
+  const variants = addressVariants(address);
+  for (let i = 0; i < variants.length; i += 1) {
+    const pos = await geocodeAddress(variants[i]);
+    if (pos) return pos;
+    if (i < variants.length - 1) await sleep(1100); // Nominatim: max 1 request per second
+  }
+  return null;
+}
+
+// Small browser-side cache so a visitor never looks up the same address twice.
+const CACHE_KEY = 'tf_geo_v1';
+export const readGeoCache = () => {
+  try { return JSON.parse(localStorage.getItem(CACHE_KEY)) || {}; } catch { return {}; }
+};
+export const writeGeoCache = (c) => {
+  try { localStorage.setItem(CACHE_KEY, JSON.stringify(c)); } catch { /* ignore */ }
+};
+export { sleep };

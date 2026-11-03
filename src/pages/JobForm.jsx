@@ -3,7 +3,7 @@ import { CheckCircle2, Loader2, ImagePlus, MapPin, Plus, Trash2 } from 'lucide-r
 import { Field, Chips, Choice, inputCls, PrimaryButton, Panel, PageShell, Banner } from '../components/ui';
 import { CITIES, SCHOOL_TYPES, JOB_TYPES, isGoogleMapsLink } from '../lib/constants';
 import { resizeImage } from '../lib/image';
-import { geocodeAddress } from '../lib/geocode';
+import { geocodeBest } from '../lib/geocode';
 import { submitJob } from '../lib/api';
 
 const initial = {
@@ -85,7 +85,7 @@ export default function JobForm() {
       // Place each address on the map (best effort; never blocks sending).
       const locations = [];
       for (const l of f.locations.filter((x) => x.address.trim()).slice(0, MAX_LOCATIONS)) {
-        const pos = await geocodeAddress(l.address);
+        const pos = await geocodeBest(l.address);
         locations.push({ label: l.label.trim(), address: l.address.trim(), maps_url: l.maps_url.trim(), ...(pos || {}) });
         if (locations.length < f.locations.length) await new Promise((r) => setTimeout(r, 1100)); // be polite: 1 request/second
       }

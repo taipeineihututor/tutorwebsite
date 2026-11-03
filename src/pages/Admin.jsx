@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Check, X, Trash2, ChevronDown, Loader2, LogOut, Mail, User } from 'lucide-react';
 import { admin } from '../lib/api';
+import { geocodeBest, sleep } from '../lib/geocode';
 import { isDemo } from '../lib/supabase';
 import { Banner, Field, inputCls, PrimaryButton, SecondaryButton, Panel } from '../components/ui';
 import { DAYS, SLOTS, VISA_SHORT, ARC_NEEDS, experienceLabel, fmtDate } from '../lib/constants';
@@ -210,6 +211,31 @@ export default function Admin() {
 
   const isAdmin = session && !session.notAdmin;
   useEffect(() => { if (isAdmin) load(); }, [isAdmin, load]);
+
+  // Place any job addresses that are not on the map yet and save the positions, so visitors do not have to.
+  const placing = React.useRef(false);
+  useEffect(() => {
+    if (!isAdmin || placing.current) return;
+    const todo = data.jobs.filter((j) => (j.locations || []).some((l) => l.address && !Number.isFinite(l.lat)));
+    if (!todo.length) return;
+    placing.current = true;
+    (async () => {
+      try {
+        for (const j of todo.slice(0, 5)) {
+          const next = [];
+          for (const l of j.locations) {
+            if (l.address && !Number.isFinite(l.lat)) {
+              const pos = await geocodeBest(l.address);
+              next.push(pos ? { ...l, ...pos } : l);
+              await sleep(1100);
+            } else next.push(l);
+          }
+          if (JSON.stringify(next) !== JSON.stringify(j.locations)) await admin.saveLocations(j.id, next);
+        }
+      } catch { /* best effort */ }
+      placing.current = false;
+    })();
+  }, [isAdmin, data.jobs]);
 
   if (session === undefined) {
     return <p className="flex items-center justify-center gap-2 text-slate-400 py-20"><Loader2 className="w-5 h-5 animate-spin" /> Checking sign-in…</p>;

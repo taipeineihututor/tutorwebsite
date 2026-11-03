@@ -201,6 +201,19 @@ export const admin = {
     return data;
   },
 
+  // Saves the map positions of a job's locations (admin only).
+  async saveLocations(id, locations) {
+    if (isDemo) {
+      const db = loadDb();
+      const row = db.jobs.find((r) => r.id === id);
+      if (row) row.locations = locations;
+      saveDb(db);
+      return;
+    }
+    const { error } = await supabase.from('jobs').update({ locations }).eq('id', id);
+    if (error) throw error;
+  },
+
   async setStatus(kind, id, status) {
     if (isDemo) {
       const db = loadDb();
