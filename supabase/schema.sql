@@ -271,3 +271,8 @@ grant select on public.public_teachers to anon, authenticated;
 --  * admin_link_teacher(teacher_id, email) attaches an old profile to a login
 --  * storage policy: a teacher may delete their own photo file
 -- =====================================================================
+
+-- UPGRADE NOTE (direct contact model): teacher profiles and verified schools' jobs are published
+-- immediately (status 'approved'); only schools are reviewed. Teachers' contact details are shown only
+-- to verified schools (rpc get_teacher_contact). teachers.last_active_at / reminded_at track activity;
+-- public_teachers hides logged-in profiles inactive for 30 days. See supabase/reminders.sql.

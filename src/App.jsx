@@ -9,9 +9,12 @@ import Legal from './pages/Legal';
 import School from './pages/School';
 import Teacher from './pages/Teacher';
 import { useRoute } from './lib/router';
+import { teacher } from './lib/api';
 
 export default function App() {
   const route = useRoute();
+  // A signed-in teacher counts as active whenever they open the site.
+  React.useEffect(() => { teacher.session().catch(() => {}); }, []);
 
   let page;
   switch (route) {

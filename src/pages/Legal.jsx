@@ -26,9 +26,10 @@ export default function Legal() {
           <ul className="space-y-2.5 text-slate-800">
             {[
               'Posting is free, for teachers and for schools.',
-              'Every teacher profile and job post is reviewed by us before it goes live.',
+              'We verify every school and institution before it can post. Teacher profiles and job posts from verified institutions go live straight away, and we may remove anything that breaks the rules.',
               'We never sell your information, and we do not give it to third parties for advertising or marketing.',
-              "A teacher's email, phone and intro video are never shown publicly. Only verified institutions can see them, and only if the teacher agreed.",
+              "A teacher's email, phone and intro video are never shown publicly. Only verified institutions can see them, so schools contact teachers directly.",
+              'Teacher profiles that have not been used (signed in) for 30 days are hidden. We email a reminder 5 days before.',
               'Every school, kindergarten, cram school or company is verified by us before it can post jobs (up to 3 at a time) or see teacher contact details.',
             ].map((t) => (
               <li key={t} className="flex gap-2.5">
@@ -53,12 +54,12 @@ export default function Legal() {
           teacher, and we do not take part in any contract between a teacher and a school.
         </P>
 
-        <H3>2. Free to post, and moderated</H3>
+        <H3>2. Free to post, and verified schools</H3>
         <P>
-          It costs nothing to create a teacher profile or post a job. Every submission is checked by us before it
-          appears on the site. We may approve it, ask you to change it, reject it, or take it offline or delete it at
-          any time. For example, if it is incomplete, misleading, a duplicate, not about teaching, or breaks these
-          rules. Being approved does not mean we have verified what it says.
+          It costs nothing to create a teacher profile or post a job. We verify institutions (see section 5). Teacher
+          profiles and the job posts of verified institutions are published straight away, without a review. We may
+          take any profile or post offline, or delete it, at any time, for example if it is misleading, a duplicate, not
+          about teaching, or breaks these rules. We do not check what teachers and schools write about themselves.
         </P>
 
         <H3>3. What we ask of you</H3>
@@ -83,14 +84,14 @@ export default function Legal() {
           verified by us before they can post a job or see any teacher’s contact details. We check the name and either the Taiwan
           business tax ID (preferred, optional) or at least one other credential: a document such as a business registration or school permit, an
           email address on the institution’s own domain, or another verifiable credential. A license is not required. Each institution can have up to
-          3 active job posts (live or waiting for review) at a time and can close a post whenever it likes.
+          3 active job posts at a time and can close a post whenever it likes.
         </P>
         <P>
-          A teacher can choose to share their email, phone number and intro video with verified institutions. If they do
-          not, nobody can see them, and a school can only use “Contact this teacher”: the message comes to us first and we
-          pass it on, and the teacher decides whether to reply. If they do, a verified institution can reveal one
-          teacher’s details at a time. Every view is recorded (which institution, which teacher, when) and the number of
-          views per day is limited.
+          A teacher’s email, phone number and intro video are visible to verified institutions only, so that schools can
+          contact teachers directly. We do not forward messages. Teachers agree to this when they create a profile. A
+          verified institution reveals one teacher’s details at a time. Every view is recorded (which institution, which
+          teacher, when) and the number of views per day is limited. The details of a job post (including the contact
+          person and email) are visible to teachers so they can apply.
         </P>
         <P>
           Institutions agree to use teachers’ details only to offer them genuine teaching work, not to pass them on, sell
@@ -112,16 +113,16 @@ export default function Legal() {
 
         <H3>What we collect</H3>
         <UL items={[
-          'Teachers: name, email, phone or LINE (optional), whether you agree to share them with verified institutions, nationality, education, certificates, experience, an introduction, a photo (optional), a link to an intro video (optional), whether you are in Taiwan, visa and stay-until date, whether you need ARC sponsorship, where you want to work, and when you are available (including any hours you list for each day).',
+          'Teachers: name, email, phone or LINE (optional), nationality, education, certificates, experience, an introduction, a photo (optional), a link to an intro video (optional), whether you are in Taiwan, visa and stay-until date, whether you need ARC sponsorship, where you want to work, and when you are available (including any hours you list for each day).',
           'Institutions: name, type, Taiwan business tax ID (optional), address, website (optional), the name, job title and phone of the person responsible, the login email, at least one way to verify the institution (a document such as a business registration or school permit, an email address on the institution’s own domain, or another credential or link), which only our admin can see, and a note of which teachers’ contact details they viewed. When they post a job: contact name and email, an application link (optional), a logo (optional), up to 3 school locations (address and optional Google Maps link), and the job details.',
-          'Messages: if a school contacts a teacher through the site, we receive the sender’s name, school, email and message.',
+          'Messages: schools contact teachers directly by email or phone. We do not read or forward them.',
           'Technical data: like most websites, our hosting provider sees basic information such as your IP address when you visit. When you submit a form we also keep your IP address for about 2 days, only to block spam and abuse.',
         ]} />
 
         <H3>What is public and what is private</H3>
         <UL items={[
           'Teacher profile, once approved, is public: first name and last initial, photo, nationality, education, experience, introduction, visa type and stay-until date, whether you need ARC sponsorship, where you want to work, and availability.',
-          'Teacher details that are never shown publicly: full name, email, phone or LINE and the intro video link. The site admin can see them. If the teacher ticked the box to share them, verified institutions can also see the email, phone and video link (each view is recorded). The public only sees that a teacher “has an intro video”.',
+          'Teacher details that are never shown publicly: full name, email, phone or LINE and the intro video link. The site admin and verified institutions can see them (each view by an institution is recorded). The public only sees that a teacher “has an intro video”.',
           'Institution registration details and proof documents are visible only to the site admin.',
           'Job post, once approved, is public, including the school name, logo, locations, the contact person’s name and the contact email, so that teachers can apply.',
         ]} />
@@ -141,7 +142,7 @@ export default function Legal() {
         <UL items={[
           'Vercel: hosts the website.',
           'Supabase: stores the database, photos, institutions’ proof documents (private) and the logins.',
-          'Resend: sends the email alerts to the site admin.',
+          'Resend: sends the email alerts to the site admin and the reminder emails to teachers.',
           'Google Fonts: the site’s fonts load from Google, so Google can see your IP address when a page loads.',
           'OpenFreeMap and OpenStreetMap: the job map loads its map data from OpenFreeMap (built on OpenStreetMap), and when a school posts a job the address of each location is sent to OpenStreetMap’s free search service (Nominatim) to place it on the map.',
         ]} />
@@ -152,9 +153,10 @@ export default function Legal() {
 
         <H3>Teacher logins</H3>
         <P>
-          Teachers can create a login (email and password) to see the status of their profile, edit it, hide it or
-          delete it, and to switch the sharing of their email, phone and intro video on or off. After an edit the profile
-          is reviewed again before it is public. A profile created without a login can only be changed by us.
+          Teachers create a login (email and password) to publish their profile, and can edit it, hide it or
+          delete it. A login is needed to create a profile. Changes are published straight away. To keep the site up to date,
+          a profile whose owner has not signed in for 30 days is hidden from schools until the teacher signs in again, and
+          we send an email reminder 5 days before this happens.
         </P>
 
         <H3>How long we keep it, and deleting it</H3>

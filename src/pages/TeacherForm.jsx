@@ -61,7 +61,7 @@ const fromProfile = (p) => ({
   arrival_date: p.arrival_date || '', needs_arc: p.needs_arc || '', cities: p.cities || [], job_types: p.job_types || [],
   available_from: p.available_from || '', available_until: p.available_until || '',
   availability: p.availability || {}, availability_notes: p.availability_notes || {},
-  consent: true, share_contact_with_schools: !!p.share_contact_with_schools,
+  consent: true, share_contact_with_schools: true,
 });
 
 export default function TeacherForm({ editing = false }) {
@@ -157,7 +157,7 @@ export default function TeacherForm({ editing = false }) {
             DAYS.map((d) => [d.key, (f.availability_notes[d.key] || '').trim()]).filter(([, v]) => v),
           ),
           consent: true,
-          share_contact_with_schools: !!f.share_contact_with_schools,
+          share_contact_with_schools: true, // required: verified schools contact teachers directly
       };
       if (editing) await teacher.update(me.profile, payload, photo?.blob || null);
       else await submitTeacher(payload, photo?.blob || null);
@@ -181,15 +181,15 @@ export default function TeacherForm({ editing = false }) {
         <Panel>
           <div className="text-center py-6 space-y-4">
             <CheckCircle2 className="w-14 h-14 text-emerald-600 mx-auto" />
-            <h2 className="text-2xl font-black">{editing ? 'Your changes have been sent for review' : 'Your profile has been sent for review'}</h2>
+            <h2 className="text-2xl font-black">{editing ? 'Your changes are saved' : 'Your profile is live!'}</h2>
             <p className="text-slate-600 max-w-md mx-auto">
               {editing
-                ? 'Your profile is hidden from schools until we have checked the changes, usually within a day or two.'
-                : 'We check every profile before it goes live. Once approved, schools will be able to find you.'} We may
-              email you at <strong>{f.email}</strong> if we have any questions.
+                ? 'The changes are visible to schools straight away.'
+                : 'Schools can find you now and contact you directly.'} Sign in at least once a month to keep your profile visible. We
+              will remind you at <strong>{f.email}</strong> before it is hidden.
             </p>
-            <a href={me ? '#/teacher' : '#/'} className="inline-block text-emerald-700 font-bold hover:underline">
-              {me ? 'Back to my profile →' : 'Browse teaching jobs →'}
+            <a href="#/teacher" className="inline-block text-emerald-700 font-bold hover:underline">
+              {'Back to my profile →'}
             </a>
           </div>
         </Panel>
@@ -205,6 +205,19 @@ export default function TeacherForm({ editing = false }) {
           <div className="text-center py-6 space-y-3">
             <p className="text-slate-700">Please log in to edit your profile.</p>
             <a href="#/teacher" className="inline-block bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-6 py-3 rounded-xl font-bold transition">Log in</a>
+          </div>
+        </Panel>
+      </PageShell>
+    );
+  }
+  if (!editing && me === undefined) return <p className="flex items-center justify-center gap-2 text-slate-200 py-20"><Loader2 className="w-5 h-5 animate-spin" /> Loading…</p>;
+  if (!editing && !me) {
+    return (
+      <PageShell title="Create your teacher profile" subtitle="Free. First create a login, so you can update or hide your profile whenever you like.">
+        <Panel>
+          <div className="text-center py-6 space-y-3">
+            <p className="text-slate-700 max-w-md mx-auto">It takes a minute: an email and a password. Then you can fill in your profile, and it goes live straight away.</p>
+            <a href="#/teacher" className="inline-block bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-6 py-3 rounded-xl font-bold transition">Create a login / log in</a>
           </div>
         </Panel>
       </PageShell>
@@ -226,14 +239,9 @@ export default function TeacherForm({ editing = false }) {
   return (
     <PageShell
       title={editing ? 'Edit your profile' : 'Create your teacher profile'}
-      subtitle={editing ? 'After you save, we check your changes again before schools can see your profile.' : "Free, and it takes about 3 minutes. Schools will see your profile once we've checked it."}
+      subtitle={editing ? 'Your changes are visible to schools as soon as you save.' : 'Free, and it takes about 3 minutes. Your profile goes live as soon as you send it.'}
     >
       <div ref={top} />
-      {!editing && !me && (
-        <div className="mb-5 rounded-2xl bg-white/10 border border-white/25 text-white px-4 py-3 text-sm">
-          <strong>Want to edit or hide your profile later?</strong> <a href="#/teacher" className="underline font-bold">Create a login or log in first</a>, then come back here. Without a login you can still create a profile, but only we can change it.
-        </div>
-      )}
       <Panel>
         {/* progress */}
         <ol className="flex items-center gap-2 mb-6" aria-label="Progress">
@@ -460,22 +468,16 @@ export default function TeacherForm({ editing = false }) {
                   experience, introduction, visa status &amp; whether you need ARC sponsorship, where you're based, and
                   availability. <strong>Never shown publicly:</strong> your full name, email, phone and intro video link.
                 </Banner>
-                <div className="rounded-2xl border-2 border-emerald-200 bg-emerald-50 p-4">
-                  <label className="flex items-start gap-3 cursor-pointer select-none">
-                    <input id="share_contact" type="checkbox" className="mt-1 w-5 h-5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-600"
-                      checked={f.share_contact_with_schools} onChange={(e) => set('share_contact_with_schools', e.target.checked)} />
-                    <span className="text-sm text-slate-800">
-                      <strong>Verified schools can see my email, phone and intro video.</strong> Optional. We check every institution
-                      (business registration and tax ID) before it can see these details, each view is recorded, and you can
-                      withdraw at any time by emailing teachformosa@gmail.com. If you leave this unticked, schools can only message you through us.
-                    </span>
-                  </label>
-                </div>
+                <Banner tone="warn">
+                  <strong>Visible to verified schools only:</strong> your email, phone / LINE and intro video link, so that schools can contact
+                  you directly. We check every institution before it can see them, each view is recorded, and the public never sees them.
+                  You can delete your profile at any time.
+                </Banner>
                 <label className="flex items-start gap-3 cursor-pointer select-none">
                   <input type="checkbox" className="mt-1 w-5 h-5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-600"
                     checked={f.consent} onChange={(e) => set('consent', e.target.checked)} />
                   <span className="text-sm text-slate-700">
-                    I agree to show the public details above on this website, and I confirm the information is true. I have read the <a href="#/legal" target="_blank" rel="noreferrer" className="underline font-semibold">Terms &amp; Privacy</a>.
+                    I agree to show the public details above on this website, to let verified schools see my email, phone and intro video, and I confirm the information is true. I have read the <a href="#/legal" target="_blank" rel="noreferrer" className="underline font-semibold">Terms &amp; Privacy</a>.
                   </span>
                 </label>
                 {errors.consent && <p role="alert" className="text-sm font-semibold text-red-600">{errors.consent}</p>}
@@ -501,7 +503,7 @@ export default function TeacherForm({ editing = false }) {
             <PrimaryButton onClick={next}>Next <ChevronRight className="w-5 h-5" /></PrimaryButton>
           ) : (
             <PrimaryButton onClick={submit} disabled={busy}>
-              {busy ? <><Loader2 className="w-5 h-5 animate-spin" /> Sending…</> : editing ? 'Save and send for review' : 'Send my profile'}
+              {busy ? <><Loader2 className="w-5 h-5 animate-spin" /> Sending…</> : editing ? 'Save changes' : 'Publish my profile'}
             </PrimaryButton>
           )}
         </div>

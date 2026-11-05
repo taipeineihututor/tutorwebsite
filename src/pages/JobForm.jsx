@@ -140,11 +140,9 @@ export default function JobForm() {
         <Panel>
           <div className="text-center py-6 space-y-4">
             <CheckCircle2 className="w-14 h-14 text-emerald-600 mx-auto" />
-            <h2 className="text-2xl font-black">Your job post has been sent for review</h2>
+            <h2 className="text-2xl font-black">Your job post is live!</h2>
             <p className="text-slate-600 max-w-md mx-auto">
-              We check every post before it goes live. We may email <strong>{f.contact_email}</strong> if we need
-              anything else.
-            </p>
+              Teachers can see it now, including the contact details you entered. Applications will come to <strong>{f.contact_email}</strong>.</p>
             <p className="text-sm text-slate-500">You can close this post at any time from your school page.</p>
             <a href="#/school" className="inline-block text-emerald-700 font-bold hover:underline">
               Go to my posts →
@@ -181,7 +179,7 @@ export default function JobForm() {
   }
 
   return (
-    <PageShell title="Post a teaching job" subtitle="Takes about 3 minutes. Your post goes live after we've checked it. Each institution can have up to 3 active posts at a time.">
+    <PageShell title="Post a teaching job" subtitle="Takes about 3 minutes. Your post goes live as soon as you send it. Each institution can have up to 3 active posts at a time.">
       <div ref={top} />
       <Panel>
         <div className="space-y-6">
@@ -354,7 +352,7 @@ export default function JobForm() {
 
           <div className="flex justify-end">
             <PrimaryButton onClick={submit} disabled={busy}>
-              {busy ? <><Loader2 className="w-5 h-5 animate-spin" /> Sending…</> : 'Send job post for review'}
+              {busy ? <><Loader2 className="w-5 h-5 animate-spin" /> Sending…</> : 'Publish job post'}
             </PrimaryButton>
           </div>
         </div>

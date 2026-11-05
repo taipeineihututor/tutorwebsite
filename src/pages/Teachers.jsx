@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Loader2, MapPin, GraduationCap, Briefcase, Plane, ShieldCheck, X, CheckCircle2, User, Play, Lock, Eye, Mail, Phone, BadgeCheck } from 'lucide-react';
-import { listTeachers, submitInquiry, getTeacherContact, school } from '../lib/api';
+import { Loader2, MapPin, GraduationCap, Briefcase, Plane, ShieldCheck, User, Play, Lock, Eye, Mail, Phone, BadgeCheck } from 'lucide-react';
+import { listTeachers, getTeacherContact, school } from '../lib/api';
 import {
   CITIES, SUBJECTS, EXPERIENCE, EDUCATION, VISA_STATUSES, VISA_SHORT, CERTIFICATES, DAYS, SLOTS, isVideoLink, normalizeCountry, fmtDate, fmtMonth, experienceLabel,
 } from '../lib/constants';
-import { AvailabilityMini, Banner, Field, inputCls, PrimaryButton, SecondaryButton } from '../components/ui';
+import { AvailabilityMini, Banner } from '../components/ui';
 
 const selectCls =
   'w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:bg-white transition';
@@ -24,96 +24,6 @@ const CHECKS = [
 ];
 
 const arcText = { yes: 'Needs ARC sponsorship', no: 'Can already work legally', unsure: 'ARC sponsorship: not sure yet' };
-
-function InquiryModal({ teacher, onClose }) {
-  const [f, setF] = useState({ from_name: '', school: '', from_email: '', message: '', website: '' });
-  const [errors, setErrors] = useState({});
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState('');
-  const [sent, setSent] = useState(false);
-  const set = (k, v) => setF((p) => ({ ...p, [k]: v }));
-
-  useEffect(() => {
-    const onKey = (e) => e.key === 'Escape' && onClose();
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
-
-  const submit = async () => {
-    const e = {};
-    if (f.from_name.trim().length < 2) e.from_name = 'Please enter your name.';
-    if (f.school.trim().length < 2) e.school = 'Please enter your school.';
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.from_email.trim())) e.from_email = 'Please enter a valid email.';
-    if (f.message.trim().length < 5) e.message = 'Please write a short message.';
-    setErrors(e);
-    if (Object.keys(e).length) return;
-    if (f.website) { setSent(true); return; }
-    setBusy(true);
-    setErr('');
-    try {
-      await submitInquiry({
-        teacher_id: teacher.id,
-        from_name: f.from_name.trim(),
-        school: f.school.trim(),
-        from_email: f.from_email.trim(),
-        message: f.message.trim(),
-      });
-      setSent(true);
-    } catch {
-      setErr('Sorry, your message was not sent. Please try again in a moment.');
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/70 p-0 sm:p-4" role="dialog" aria-modal="true" aria-label={`Request an introduction to ${teacher.display_name}`}>
-      <div className="bg-white text-slate-900 w-full sm:max-w-lg rounded-t-3xl sm:rounded-3xl p-6 max-h-[92vh] overflow-y-auto">
-        <div className="flex items-start justify-between gap-4 mb-4">
-          <h2 className="text-xl font-black">Contact {teacher.display_name}</h2>
-          <button onClick={onClose} aria-label="Close" className="p-1 rounded-lg hover:bg-slate-100"><X className="w-6 h-6" /></button>
-        </div>
-
-        {sent ? (
-          <div className="text-center py-6 space-y-3">
-            <CheckCircle2 className="w-12 h-12 text-emerald-600 mx-auto" />
-            <p className="font-bold text-lg">Message sent</p>
-            <p className="text-slate-600">We'll pass your message on to the teacher and they can reply to you directly.</p>
-            <SecondaryButton onClick={onClose}>Close</SecondaryButton>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <p className="text-sm text-slate-600">
-              To protect teachers' privacy, messages go through us first. We'll forward yours.
-            </p>
-            <Field label="Your name" required error={errors.from_name} htmlFor="iq_name">
-              <input id="iq_name" className={inputCls} value={f.from_name} onChange={(e) => set('from_name', e.target.value)} />
-            </Field>
-            <Field label="School" required error={errors.school} htmlFor="iq_school">
-              <input id="iq_school" className={inputCls} value={f.school} onChange={(e) => set('school', e.target.value)} />
-            </Field>
-            <Field label="Your email" required error={errors.from_email} htmlFor="iq_email">
-              <input id="iq_email" type="email" className={inputCls} value={f.from_email} onChange={(e) => set('from_email', e.target.value)} />
-            </Field>
-            <Field label="Message" required error={errors.message} htmlFor="iq_msg" hint="Say a little about the job and how to reach you.">
-              <textarea id="iq_msg" rows={4} maxLength={2000} className={inputCls} value={f.message} onChange={(e) => set('message', e.target.value)} />
-            </Field>
-            <div aria-hidden="true" className="absolute -left-[9999px] h-0 overflow-hidden">
-              <label>Website<input tabIndex={-1} autoComplete="off" value={f.website} onChange={(e) => set('website', e.target.value)} /></label>
-            </div>
-            {err && <Banner tone="error">{err}</Banner>}
-            <div className="flex justify-end gap-3">
-              <SecondaryButton onClick={onClose}>Cancel</SecondaryButton>
-              <PrimaryButton onClick={submit} disabled={busy}>
-                {busy ? <><Loader2 className="w-5 h-5 animate-spin" /> Sending…</> : 'Send message'}
-              </PrimaryButton>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
 
 // Contact details: only verified institutions can reveal them, one teacher at a time (logged on the server).
 function ContactBox({ t, verified }) {
@@ -172,7 +82,7 @@ function ContactBox({ t, verified }) {
   );
 }
 
-function TeacherCard({ t, onContact, verified }) {
+function TeacherCard({ t, verified }) {
   const where = t.cities?.length ? t.cities.join(', ') : '';
   return (
     <article className="bg-white text-slate-900 border border-white rounded-2xl p-5 sm:p-6 shadow-lg shadow-black/20 hover:shadow-xl transition">
@@ -229,7 +139,6 @@ function TeacherCard({ t, onContact, verified }) {
             <AvailabilityMini availability={t.availability} days={DAYS} slots={SLOTS} />
           )}
         </div>
-        <PrimaryButton onClick={() => onContact(t)} className="sm:self-end">Contact this teacher</PrimaryButton>
       </div>
 
       {DAYS.some((d) => t.availability_notes?.[d.key]) && (
@@ -258,7 +167,6 @@ export default function Teachers() {
   const [slot, setSlot] = useState('any');
   const [minExp, setMinExp] = useState('any');
   const [checks, setChecks] = useState({});
-  const [contacting, setContacting] = useState(null);
   const [verified, setVerified] = useState(false);
 
   useEffect(() => {
@@ -321,7 +229,7 @@ export default function Teachers() {
     <section className="px-4 sm:px-6 lg:px-8 py-10 sm:py-14 bg-gradient-to-b from-[#2A4DB5] to-[#1D3A8C]">
       <div className="max-w-5xl mx-auto">
         <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-white mb-2">Find teachers</h1>
-        <p className="text-slate-300 text-lg mb-8">Every profile has been reviewed. Email, phone and intro videos are only shared with verified schools, and only if the teacher agreed.</p>
+        <p className="text-slate-300 text-lg mb-8">Teachers' email, phone and intro videos are visible to verified schools only.</p>
 
         <div className="bg-white text-slate-900 rounded-3xl p-6 shadow-2xl shadow-emerald-500/10 mb-8">
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -432,11 +340,10 @@ export default function Teachers() {
               )}
             </div>
           )}
-          {filtered.map((t) => <TeacherCard key={t.id} t={t} onContact={setContacting} verified={verified} />)}
+          {filtered.map((t) => <TeacherCard key={t.id} t={t} verified={verified} />)}
         </div>
       </div>
 
-      {contacting && <InquiryModal teacher={contacting} onClose={() => setContacting(null)} />}
     </section>
   );
 }

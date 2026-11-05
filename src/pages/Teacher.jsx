@@ -44,7 +44,7 @@ function SignIn({ onDone }) {
   };
 
   return (
-    <PageShell title="Teachers" subtitle="Log in to see, update or hide your profile. New here? Create a login first, then your profile. It's free.">
+    <PageShell title="Teachers" subtitle="Log in to update, hide or delete your profile. New here? Create a login first, then your profile, which goes live straight away. It's free.">
       <Panel>
         <div className="flex flex-wrap gap-2 mb-5" role="tablist">
           {[['in', 'I already have a login'], ['up', 'Create a login']].map(([k, l]) => (
@@ -67,7 +67,6 @@ function SignIn({ onDone }) {
         </form>
         <div className="mt-6 pt-5 border-t border-slate-200 text-sm text-slate-600 space-y-1">
           <p>Already sent a profile before there were logins? Create a login with the <strong>same email</strong>, then email <a className="underline font-semibold" href="mailto:teachformosa@gmail.com">teachformosa@gmail.com</a> and we will connect it to your login.</p>
-          <p>Prefer not to have a login? You can still <a className="underline font-semibold" href="#/join">create a profile without one</a>, but you will not be able to edit it yourself.</p>
         </div>
       </Panel>
     </PageShell>
@@ -100,10 +99,10 @@ export default function Teacher() {
     state = p.status === 'approved'
       ? (p.hidden
         ? { icon: EyeOff, tone: 'bg-slate-100 border-slate-300', title: 'Your profile is hidden', text: 'Schools cannot see it. Show it again whenever you want.' }
-        : { icon: CheckCircle2, tone: 'bg-emerald-50 border-emerald-200', title: 'Your profile is live', text: 'Schools can find you on “Find teachers”.' })
+        : { icon: CheckCircle2, tone: 'bg-emerald-50 border-emerald-200', title: 'Your profile is live', text: 'Schools can find you on “Find teachers” and contact you directly. Sign in at least once every 30 days to stay visible.' })
       : p.status === 'pending'
-        ? { icon: Clock, tone: 'bg-amber-50 border-amber-200', title: 'Your profile is waiting for review', text: 'We check every profile before it goes live. It is not visible to schools until then.' }
-        : { icon: XCircle, tone: 'bg-red-50 border-red-200', title: 'We could not publish your profile yet', text: 'Please read our note below, update your profile and send it again.' };
+        ? { icon: Clock, tone: 'bg-amber-50 border-amber-200', title: 'Your profile is offline', text: 'It is not visible to schools at the moment. Email teachformosa@gmail.com if you think this is a mistake.' }
+        : { icon: XCircle, tone: 'bg-red-50 border-red-200', title: 'Your profile has been taken offline', text: 'Please read our note below, or email teachformosa@gmail.com.' };
   }
 
   return (
@@ -118,7 +117,7 @@ export default function Teacher() {
           <div className="text-center py-6 space-y-3">
             <User className="w-12 h-12 text-slate-400 mx-auto" />
             <h2 className="text-2xl font-black">You have not created a profile yet</h2>
-            <p className="text-slate-600 max-w-md mx-auto">It's free and takes about 3 minutes. We check it before schools can see it.</p>
+            <p className="text-slate-600 max-w-md mx-auto">It's free and takes about 3 minutes. It goes live as soon as you send it.</p>
             <a href="#/join" className="inline-block bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-6 py-3 rounded-xl font-bold transition">Create my profile</a>
           </div>
         ) : (
@@ -153,18 +152,17 @@ export default function Teacher() {
               )}
               <SecondaryButton disabled={busy} onClick={remove} className="!py-2.5 !text-red-700 !border-red-200 hover:!border-red-500"><Trash2 className="w-4 h-4" /> Delete my profile</SecondaryButton>
             </div>
-            <p className="text-sm text-slate-500">When you edit your profile it goes back to us for a quick check and is hidden from schools until we approve it again.</p>
+            <p className="text-sm text-slate-500">Changes go live straight away. Your email, phone and intro video are visible to verified schools only, so they can contact you directly.</p>
 
-            <div className="rounded-2xl border-2 border-emerald-200 bg-emerald-50 p-4">
-              <label className="flex items-start gap-3 cursor-pointer select-none">
-                <input type="checkbox" disabled={busy} checked={!!p.share_contact_with_schools}
-                  onChange={(e) => act(() => teacher.setFlags(p, { share_contact_with_schools: e.target.checked }))}
-                  className="mt-1 w-5 h-5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-600" />
-                <span className="text-sm text-slate-800">
-                  <strong>Verified schools can see my email, phone and intro video.</strong> You can switch this on or off at any time. It takes effect immediately.
-                </span>
-              </label>
-            </div>
+            {!p.share_contact_with_schools && (
+              <div className="rounded-2xl border-2 border-amber-300 bg-amber-50 p-4 space-y-3">
+                <p className="text-sm text-slate-800">
+                  <strong>One thing to confirm:</strong> on TeachFormosa, verified schools contact teachers directly. Please confirm that verified schools may see your
+                  email, phone and intro video. Until you do, schools cannot see your contact details.
+                </p>
+                <PrimaryButton disabled={busy} onClick={() => act(() => teacher.setFlags(p, { share_contact_with_schools: true }))} className="!py-2.5">I agree</PrimaryButton>
+              </div>
+            )}
             {err && <Banner tone="error">{err}</Banner>}
           </div>
         )}

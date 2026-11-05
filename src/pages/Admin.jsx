@@ -342,7 +342,7 @@ function Login({ onDone, notAdminEmail }) {
 export default function Admin() {
   const [session, setSession] = useState(undefined); // undefined = still checking
   const [tab, setTab] = useState('teachers');
-  const [status, setStatus] = useState('pending');
+  const [status, setStatus] = useState('approved');
   const [data, setData] = useState({ teachers: [], jobs: [], inquiries: [], schools: [], views: [] });
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -447,7 +447,7 @@ export default function Admin() {
   const count = (k, s) => data[k].filter((r) => r.status === s).length;
   // Last time anything happened: posted, approved/edited/noted/"still active", or (teachers) a school wrote to them.
   const lastActive = (item) => {
-    const own = new Date(item.updated_at || item.created_at).getTime();
+    const own = Math.max(new Date(item.updated_at || item.created_at).getTime(), item.last_active_at ? new Date(item.last_active_at).getTime() : 0);
     if (tab !== 'teachers') return own;
     return data.inquiries.filter((q) => q.teacher_id === item.id).reduce((m, q) => Math.max(m, new Date(q.created_at).getTime()), own);
   };
@@ -471,10 +471,10 @@ export default function Admin() {
         </div>
 
         <div className="flex gap-2 mb-4 overflow-x-auto">
-          {TABS.map((t) => {
+          {TABS.filter((t) => t.key !== 'inquiries' || data.inquiries.length > 0).map((t) => {
             const pending = t.key === 'inquiries' ? data.inquiries.length : count(t.key, 'pending');
             return (
-              <button key={t.key} onClick={() => setTab(t.key)}
+              <button key={t.key} onClick={() => { setTab(t.key); setStatus(t.key === 'schools' ? 'pending' : 'approved'); }}
                 className={`px-4 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition ${tab === t.key ? 'bg-emerald-500 text-slate-950' : 'bg-slate-900 text-slate-200 border border-slate-700'}`}>
                 {t.label}
                 {pending > 0 && (

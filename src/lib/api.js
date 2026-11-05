@@ -86,7 +86,7 @@ export async function getJobContact(job) {
 export async function listTeachers() {
   if (isDemo) {
     return loadDb()
-      .teachers.filter((t) => t.status === 'approved' && !t.hidden)
+      .teachers.filter((t) => t.status === 'approved' && !t.hidden && (!t.user_id || Date.now() - new Date(t.last_active_at || t.created_at).getTime() < 30 * 86400000))
       .sort(newestFirst)
       .map(toPublicTeacher);
   }
@@ -109,7 +109,8 @@ export async function submitTeacher(payload, photoBlob) {
       user_id: sessionStorage.getItem(DEMO_TEACHER_KEY) || null,
       id: uid(),
       created_at: new Date().toISOString(),
-      status: 'pending',
+      status: 'approved',
+      last_active_at: new Date().toISOString(),
       photo_url,
     });
     saveDb(db);
@@ -127,7 +128,8 @@ export async function submitTeacher(payload, photoBlob) {
   // No .select() here on purpose: visitors may insert but may not read back.
   const { data: sess } = await supabase.auth.getSession();
   const user_id = sess.session?.user?.id || null; // a signed-in teacher's profile belongs to their login
-  const { error } = await supabase.from('teachers').insert({ ...payload, user_id, photo_url, status: 'pending' });
+  if (!user_id) throw Object.assign(new Error('Please log in first to create your profile.'), { code: 'P0001' });
+  const { error } = await supabase.from('teachers').insert({ ...payload, user_id, photo_url, status: 'approved' });
   if (error) throw error;
 }
 
@@ -137,7 +139,7 @@ export async function submitJob(payload, logoBlob) {
     const logo_url = logoBlob ? await blobToDataUrl(logoBlob) : null;
     const active = db.jobs.filter((j) => j.school_id === payload.school_id && ['pending', 'approved'].includes(j.status) && !j.closed_at).length;
     if (active >= 3) throw Object.assign(new Error(CAP_MESSAGE), { code: 'P0001' });
-    db.jobs.unshift({ ...payload, logo_url, id: uid(), created_at: new Date().toISOString(), status: 'pending' });
+    db.jobs.unshift({ ...payload, logo_url, id: uid(), created_at: new Date().toISOString(), status: 'approved' });
     saveDb(db);
     return;
   }
@@ -150,7 +152,7 @@ export async function submitJob(payload, logoBlob) {
     if (upErr) throw upErr;
     logo_url = supabase.storage.from('photos').getPublicUrl(path).data.publicUrl;
   }
-  const { error } = await supabase.from('jobs').insert({ ...payload, logo_url, status: 'pending' });
+  const { error } = await supabase.from('jobs').insert({ ...payload, logo_url, status: 'approved' });
   if (error) throw error;
 }
 
@@ -435,12 +437,16 @@ export const teacher = {
     if (isDemo) {
       const email = sessionStorage.getItem(DEMO_TEACHER_KEY);
       if (!email) return null;
-      return { email, userId: email, profile: loadDb().teachers.find((r) => r.user_id === email) || null };
+      const db = loadDb();
+      const profile = db.teachers.find((r) => r.user_id === email) || null;
+      if (profile) { profile.last_active_at = new Date().toISOString(); saveDb(db); } // using the site keeps the profile visible
+      return { email, userId: email, profile };
     }
     const { data } = await supabase.auth.getSession();
     const user = data.session?.user;
     if (!user) return null;
     const { data: profile } = await supabase.from('teachers').select('*').eq('user_id', user.id).maybeSingle();
+    if (profile) supabase.rpc('touch_my_profile').then(() => {}, () => {}); // signing in / using the site keeps the profile visible
     return { email: user.email, userId: user.id, profile: profile || null };
   },
 
@@ -469,7 +475,7 @@ export const teacher = {
       const row = db.teachers.find((r) => r.id === profile.id);
       if (!row) return;
       const photo_url = photoBlob ? await blobToDataUrl(photoBlob) : row.photo_url;
-      Object.assign(row, payload, { photo_url, status: 'pending', updated_at: new Date().toISOString() });
+      Object.assign(row, payload, { photo_url, updated_at: new Date().toISOString() });
       saveDb(db);
       return;
     }

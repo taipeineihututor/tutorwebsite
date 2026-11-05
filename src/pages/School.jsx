@@ -292,7 +292,7 @@ function Dashboard({ session, onChange }) {
 
       <div>
         <h2 className="text-lg font-black text-slate-900 mb-1">My posts</h2>
-        <p className="text-sm text-slate-500 mb-3">Active posts (live or waiting for review): {active} of {MAX_ACTIVE_POSTS}</p>
+        <p className="text-sm text-slate-500 mb-3">Active posts (live): {active} of {MAX_ACTIVE_POSTS}</p>
         {err && <Banner tone="error">{err}</Banner>}
         {jobs === null && <p className="flex items-center gap-2 text-slate-500"><Loader2 className="w-4 h-4 animate-spin" /> Loading…</p>}
         {jobs?.length === 0 && <p className="text-slate-500">You have not posted anything yet.</p>}
