@@ -388,7 +388,7 @@ export default function Admin() {
   }, [isAdmin, data.jobs]);
 
   if (session === undefined) {
-    return <p className="flex items-center justify-center gap-2 text-slate-400 py-20"><Loader2 className="w-5 h-5 animate-spin" /> Checking sign-in…</p>;
+    return <p className="flex items-center justify-center gap-2 text-slate-200 py-20"><Loader2 className="w-5 h-5 animate-spin" /> Checking sign-in…</p>;
   }
   if (!isAdmin) return <Login onDone={checkSession} notAdminEmail={session?.notAdmin ? session.email : ''} />;
 

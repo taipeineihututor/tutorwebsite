@@ -218,7 +218,10 @@ export default function Home() {
   return (
     <>
       {/* Hero */}
-      <section className="relative pt-12 pb-14 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-[#0A1745] via-[#0F2263] to-[#0A1745] overflow-hidden">
+      <section className="relative pt-12 pb-14 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-[#1D3A8C] via-[#2A4DB5] to-[#1D3A8C] overflow-hidden">
+        {/* soft translucent glows */}
+        <div aria-hidden="true" className="pointer-events-none absolute -top-24 -left-24 w-96 h-96 rounded-full bg-yellow-300/20 blur-3xl" />
+        <div aria-hidden="true" className="pointer-events-none absolute -bottom-32 -right-16 w-[28rem] h-[28rem] rounded-full bg-sky-300/20 blur-3xl" />
         <div className="max-w-5xl mx-auto text-center relative z-10">
           <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-white border border-white text-emerald-700 text-xs font-semibold mb-6 shadow-inner">
             <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
@@ -322,7 +325,7 @@ export default function Home() {
           <div className="mt-8 space-y-4">
             {loadError && <Banner tone="error">{loadError}</Banner>}
             {jobs === null && (
-              <p className="flex items-center justify-center gap-2 text-slate-400 py-10"><Loader2 className="w-5 h-5 animate-spin" /> Loading jobs…</p>
+              <p className="flex items-center justify-center gap-2 text-slate-200 py-10"><Loader2 className="w-5 h-5 animate-spin" /> Loading jobs…</p>
             )}
             {jobs !== null && filtered.length === 0 && !loadError && (
               <div className="text-center py-12 px-4 bg-white border border-white rounded-2xl shadow-lg shadow-black/20">

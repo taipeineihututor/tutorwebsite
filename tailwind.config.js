@@ -7,8 +7,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['"Plus Jakarta Sans"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-        display: ['"Bricolage Grotesque"', '"Plus Jakarta Sans"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        sans: ['Roboto', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        display: ['Roboto', 'ui-sans-serif', 'system-ui', 'sans-serif'],
       },
       // TeachFormosa palette: deep blue + yellow. The whole site uses these two
       // scales, so changing them here re-colours everything.

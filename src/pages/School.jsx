@@ -322,7 +322,7 @@ export default function School() {
   const refresh = useCallback(() => school.session().then((s) => { setSession(s); setEditing(false); }).catch(() => setSession(null)), []);
   useEffect(() => { refresh(); }, [refresh]);
 
-  if (session === undefined) return <p className="flex items-center justify-center gap-2 text-slate-400 py-20"><Loader2 className="w-5 h-5 animate-spin" /> Loading…</p>;
+  if (session === undefined) return <p className="flex items-center justify-center gap-2 text-slate-200 py-20"><Loader2 className="w-5 h-5 animate-spin" /> Loading…</p>;
   if (!session) return <SignIn onDone={refresh} />;
 
   const reg = session.registration;

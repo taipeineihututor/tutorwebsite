@@ -129,7 +129,7 @@ export function Panel({ children, className = '' }) {
 
 export function PageShell({ title, subtitle, children }) {
   return (
-    <section className="px-4 sm:px-6 lg:px-8 py-10 sm:py-14 bg-gradient-to-b from-[#0F2263] to-[#0A1745]">
+    <section className="px-4 sm:px-6 lg:px-8 py-10 sm:py-14 bg-gradient-to-b from-[#2A4DB5] to-[#1D3A8C]">
       <div className="max-w-3xl mx-auto">
         <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-white mb-3">{title}</h1>
         {subtitle && <p className="text-slate-300 text-lg mb-8 leading-relaxed">{subtitle}</p>}

@@ -318,7 +318,7 @@ export default function Teachers() {
   const reset = () => { setCity('All Locations'); setCountry('Any'); setSubject('Any'); setEducation('any'); setVisa('any'); setDays([]); setSlot('any'); setMinExp('any'); setChecks({}); };
 
   return (
-    <section className="px-4 sm:px-6 lg:px-8 py-10 sm:py-14 bg-gradient-to-b from-[#0F2263] to-[#0A1745]">
+    <section className="px-4 sm:px-6 lg:px-8 py-10 sm:py-14 bg-gradient-to-b from-[#2A4DB5] to-[#1D3A8C]">
       <div className="max-w-5xl mx-auto">
         <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-white mb-2">Find teachers</h1>
         <p className="text-slate-300 text-lg mb-8">Every profile has been reviewed. Email, phone and intro videos are only shared with verified schools, and only if the teacher agreed.</p>
@@ -414,10 +414,10 @@ export default function Teachers() {
         <div className="space-y-4">
           {loadError && <Banner tone="error">{loadError}</Banner>}
           {teachers === null && (
-            <p className="flex items-center justify-center gap-2 text-slate-400 py-10"><Loader2 className="w-5 h-5 animate-spin" /> Loading profiles…</p>
+            <p className="flex items-center justify-center gap-2 text-slate-200 py-10"><Loader2 className="w-5 h-5 animate-spin" /> Loading profiles…</p>
           )}
           {teachers !== null && !loadError && (
-            <p className="text-sm font-semibold text-slate-400">{filtered.length} {filtered.length === 1 ? 'teacher' : 'teachers'}</p>
+            <p className="text-sm font-semibold text-slate-200">{filtered.length} {filtered.length === 1 ? 'teacher' : 'teachers'}</p>
           )}
           {teachers !== null && filtered.length === 0 && !loadError && (
             <div className="text-center py-12 px-4 bg-white border border-white rounded-2xl shadow-lg shadow-black/20">
