@@ -27,8 +27,8 @@ export default function Layout({ route, children }) {
   const [open, setOpen] = useState(false);
   const linkCls = (active) =>
     active
-      ? 'text-emerald-400 bg-emerald-500/10 px-4 py-2 rounded-lg border border-emerald-500/20'
-      : 'text-slate-300 hover:text-white px-4 py-2 transition';
+      ? 'text-emerald-400 bg-white/10 px-3 lg:px-5 py-2.5 rounded-xl border border-white/20'
+      : 'text-white hover:text-emerald-300 px-3 lg:px-5 py-2.5 rounded-xl hover:bg-white/10 transition';
 
   return (
     <div className="min-h-screen bg-[#1D3A8C] text-slate-100 font-sans selection:bg-emerald-500 selection:text-black flex flex-col">
@@ -52,7 +52,7 @@ export default function Layout({ route, children }) {
             </div>
           </a>
 
-          <nav className="hidden md:flex items-center space-x-2 text-sm font-medium">
+          <nav className="hidden md:flex items-center space-x-1 lg:space-x-3 text-base lg:text-xl font-bold">
             {links.map((l) => (
               <a key={l.href} href={l.href} className={linkCls(l.match(route))}>
                 {l.label}
@@ -63,14 +63,14 @@ export default function Layout({ route, children }) {
           <div className="hidden md:flex items-center space-x-3">
             <a
               href="#/school"
-              className="flex items-center space-x-2 border border-white/30 hover:border-emerald-400 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition"
+              className="flex items-center space-x-2 border border-white/30 hover:border-emerald-400 text-white px-3 lg:px-5 py-3 rounded-xl text-sm lg:text-base font-bold transition"
             >
               <Plus className="w-4 h-4 text-emerald-400" />
               <span>Schools: post a job</span>
             </a>
             <a
               href="#/join"
-              className="flex items-center space-x-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-emerald-500/20 transition"
+              className="flex items-center space-x-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-4 lg:px-6 py-3 rounded-xl text-sm lg:text-base font-bold shadow-lg shadow-emerald-500/20 transition"
             >
               <User className="w-4 h-4" />
               <span>I'm a Teacher</span>
