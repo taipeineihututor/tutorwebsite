@@ -28,7 +28,7 @@ export default function Layout({ route, children }) {
   const linkCls = (active) =>
     active
       ? 'text-emerald-400 bg-white/10 px-3 lg:px-5 py-2.5 rounded-xl border border-white/20'
-      : 'text-white hover:text-emerald-300 px-3 lg:px-5 py-2.5 rounded-xl hover:bg-white/10 transition';
+      : 'text-white border border-white/25 hover:border-emerald-400 hover:text-emerald-300 hover:bg-white/10 px-3 lg:px-5 py-2.5 rounded-xl transition';
 
   return (
     <div className="min-h-screen bg-[#1D3A8C] text-slate-100 font-sans selection:bg-emerald-500 selection:text-black flex flex-col">
