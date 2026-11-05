@@ -260,3 +260,14 @@ grant select on public.public_teachers to anon, authenticated;
 --    block_duplicate_submission() caps pending+approved, not-closed jobs at 3 per school; close_my_job(uuid) RPC
 --  * public_jobs / get_job_contact() ignore closed jobs
 -- =====================================================================
+
+
+-- =====================================================================
+-- TEACHER LOGINS (upgrade block, already applied via migration "teacher_logins")
+--  * teachers.user_id (one profile per login), teachers.hidden
+--  * policies: teacher sees / edits / deletes own profile; protect_teacher_fields trigger
+--    (owners cannot change status/admin_note/user_id; content edits send the profile back to 'pending')
+--  * public_teachers + get_teacher_contact ignore hidden profiles
+--  * admin_link_teacher(teacher_id, email) attaches an old profile to a login
+--  * storage policy: a teacher may delete their own photo file
+-- =====================================================================

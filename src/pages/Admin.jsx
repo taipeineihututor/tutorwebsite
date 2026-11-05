@@ -46,6 +46,8 @@ function teacherRows(t) {
     ['Hours by day', DAYS.filter((d) => t.availability_notes?.[d.key]).map((d) => `${d.label}: ${t.availability_notes[d.key]}`).join('\n')],
     ['Intro video', t.video_url],
     ['Shares email/phone/video with verified schools', t.share_contact_with_schools ? 'Yes' : 'No'],
+    ['Teacher login', t.user_id ? 'Linked to a login' : 'No login (cannot edit it themselves)'],
+    ['Hidden by the teacher', t.hidden ? 'Yes' : ''],
     ['Introduction', t.bio],
     ['Admin note (private)', t.admin_note],
   ];
@@ -180,7 +182,7 @@ function NotePanel({ kind, item, busy, onSave, onClose }) {
   );
 }
 
-function Row({ kind, item, all, lastActive, onSet, onDelete, onNote, onTouch, busy, views, names }) {
+function Row({ kind, item, all, lastActive, onSet, onDelete, onNote, onTouch, onLink, busy, views, names }) {
   const [open, setOpen] = useState(false);
   const [noting, setNoting] = useState(false);
   // Same email (teacher) or same school + title (job) elsewhere in the list = probably a repeat.
@@ -223,6 +225,8 @@ function Row({ kind, item, all, lastActive, onSet, onDelete, onNote, onTouch, bu
             {dupes.length > 0 && <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-orange-100 text-orange-800">possible duplicate ×{dupes.length}</span>}
             {item.admin_note && <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-sky-100 text-sky-800">note saved</span>}
             {item.closed_at && <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-200 text-slate-700">closed by school</span>}
+            {isTeacher && item.user_id && <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-100 text-indigo-800">has login</span>}
+            {isTeacher && item.hidden && <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-200 text-slate-700">hidden by teacher</span>}
             {isTeacher && item.share_contact_with_schools && <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">shares contact</span>}
           </div>
           <p className="text-sm text-slate-600 break-words">{sub}</p>
@@ -249,6 +253,9 @@ function Row({ kind, item, all, lastActive, onSet, onDelete, onNote, onTouch, bu
       )}
 
       <div className="mt-4 flex flex-wrap gap-2">
+        {isTeacher && !item.user_id && (
+          <SecondaryButton disabled={busy} onClick={() => onLink(item)} className="!py-2 !text-sm">Link to a login</SecondaryButton>
+        )}
         {isSchool && item.proof_path && (
           <SecondaryButton disabled={busy} onClick={openProof} className="!py-2 !text-sm"><FileText className="w-4 h-4" /> Open proof document</SecondaryButton>
         )}
@@ -421,6 +428,13 @@ export default function Admin() {
       setBusy(false);
     }
   };
+  const linkItem = async (item) => {
+    const email = window.prompt('Email the teacher used to create their login:', item.email || '');
+    if (!email || !email.trim()) return;
+    setBusy(true);
+    setError('');
+    try { await admin.linkTeacher(item.id, email.trim()); await load(); } catch (ex) { setError(ex?.message || 'Could not link the profile.'); } finally { setBusy(false); }
+  };
   const touchItem = (item) => act(() => admin.touch(tab, item.id));
   const deleteItem = (item) => {
     if (window.confirm('Delete this permanently? This cannot be undone.')) act(() => admin.remove(tab, item));
@@ -515,7 +529,7 @@ export default function Admin() {
                   </article>
                 ))
               : list.map((item) => (
-                  <Row key={item.id} kind={tab} item={item} all={data[tab]} lastActive={lastActive(item)} onTouch={touchItem} busy={busy} onSet={setItemStatus} onDelete={deleteItem} onNote={sendNote} views={data.views} names={names} />
+                  <Row key={item.id} kind={tab} item={item} all={data[tab]} lastActive={lastActive(item)} onTouch={touchItem} onLink={linkItem} busy={busy} onSet={setItemStatus} onDelete={deleteItem} onNote={sendNote} views={data.views} names={names} />
                 ))}
           </div>
         </Panel>

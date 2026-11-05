@@ -246,7 +246,11 @@ export default function Home() {
             </a>
           </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-sm font-medium text-slate-300 mt-10">
+          <p className="mt-5 text-sm sm:text-base text-white/90">
+            Already registered? <a href="#/teacher" className="font-bold underline hover:text-emerald-300">Teachers: log in</a> · <a href="#/school" className="font-bold underline hover:text-emerald-300">Schools: log in</a>
+          </p>
+
+          <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-sm font-medium text-slate-300 mt-6">
             {['Free for teachers and schools', 'Every post is reviewed before it goes live', 'Work Permit (ARC) support shown up front', 'Contact details shared only with verified schools'].map((t) => (
               <div key={t} className="flex items-center space-x-2 bg-white text-slate-800 px-4 py-2 rounded-xl border border-white shadow-md shadow-black/10">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600" />

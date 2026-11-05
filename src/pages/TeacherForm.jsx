@@ -6,7 +6,7 @@ import {
 import {
   CITIES, SUBJECTS, EDUCATION, CERTIFICATES, EXPERIENCE, VISA_STATUSES, isVideoLink, COUNTRIES, ARC_NEEDS, DAYS, SLOTS,
 } from '../lib/constants';
-import { submitTeacher } from '../lib/api';
+import { submitTeacher, teacher } from '../lib/api';
 import { resizeImage } from '../lib/image';
 
 const STEPS = ['About you', 'Taiwan & visa', 'Availability'];
@@ -52,7 +52,20 @@ function validate(step, f) {
   return e;
 }
 
-export default function TeacherForm() {
+const fromProfile = (p) => ({
+  ...initial,
+  full_name: p.full_name || '', email: p.email || '', phone: p.phone || '', nationality: p.nationality || '',
+  native_english: p.native_english || '', education: p.education || '', certificates: p.certificates || [],
+  experience: p.experience || '', subjects: p.subjects || [], bio: p.bio || '', video_url: p.video_url || '',
+  in_taiwan: p.in_taiwan ? 'yes' : 'no', visa_status: p.visa_status || '', stay_until: p.stay_until || '',
+  arrival_date: p.arrival_date || '', needs_arc: p.needs_arc || '', cities: p.cities || [], job_types: p.job_types || [],
+  available_from: p.available_from || '', available_until: p.available_until || '',
+  availability: p.availability || {}, availability_notes: p.availability_notes || {},
+  consent: true, share_contact_with_schools: !!p.share_contact_with_schools,
+});
+
+export default function TeacherForm({ editing = false }) {
+  const [me, setMe] = useState(undefined); // signed-in teacher session (or null)
   const [step, setStep] = useState(0);
   const [f, setF] = useState(initial);
   const [errors, setErrors] = useState({});
@@ -64,6 +77,13 @@ export default function TeacherForm() {
   const top = useRef(null);
 
   const set = (k, v) => setF((p) => ({ ...p, [k]: v }));
+  useEffect(() => {
+    teacher.session().then((s) => {
+      setMe(s);
+      if (editing && s?.profile) setF(fromProfile(s.profile));
+      else if (s?.email) setF((p) => ({ ...p, email: p.email || s.email }));
+    }).catch(() => setMe(null));
+  }, [editing]);
   useEffect(() => () => photo && URL.revokeObjectURL(photo.preview), [photo]);
 
   const scrollTop = () => top.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -111,8 +131,7 @@ export default function TeacherForm() {
       const cleanAvailability = Object.fromEntries(
         Object.entries(f.availability).filter(([, v]) => v.length > 0),
       );
-      await submitTeacher(
-        {
+      const payload = {
           full_name: f.full_name.trim(),
           email: f.email.trim(),
           phone: f.phone.trim() || null,
@@ -139,9 +158,9 @@ export default function TeacherForm() {
           ),
           consent: true,
           share_contact_with_schools: !!f.share_contact_with_schools,
-        },
-        photo?.blob || null,
-      );
+      };
+      if (editing) await teacher.update(me.profile, payload, photo?.blob || null);
+      else await submitTeacher(payload, photo?.blob || null);
       setDone(true);
       setTimeout(scrollTop, 0);
     } catch (err) {
@@ -162,14 +181,42 @@ export default function TeacherForm() {
         <Panel>
           <div className="text-center py-6 space-y-4">
             <CheckCircle2 className="w-14 h-14 text-emerald-600 mx-auto" />
-            <h2 className="text-2xl font-black">Your profile has been sent for review</h2>
+            <h2 className="text-2xl font-black">{editing ? 'Your changes have been sent for review' : 'Your profile has been sent for review'}</h2>
             <p className="text-slate-600 max-w-md mx-auto">
-              We check every profile before it goes live. Once approved, schools will be able to find you. We may
+              {editing
+                ? 'Your profile is hidden from schools until we have checked the changes, usually within a day or two.'
+                : 'We check every profile before it goes live. Once approved, schools will be able to find you.'} We may
               email you at <strong>{f.email}</strong> if we have any questions.
             </p>
-            <a href="#/" className="inline-block text-emerald-700 font-bold hover:underline">
-              Browse teaching jobs →
+            <a href={me ? '#/teacher' : '#/'} className="inline-block text-emerald-700 font-bold hover:underline">
+              {me ? 'Back to my profile →' : 'Browse teaching jobs →'}
             </a>
+          </div>
+        </Panel>
+      </PageShell>
+    );
+  }
+
+  if (editing && me === undefined) return <p className="flex items-center justify-center gap-2 text-slate-200 py-20"><Loader2 className="w-5 h-5 animate-spin" /> Loading…</p>;
+  if (editing && !me?.profile) {
+    return (
+      <PageShell title="Edit your profile">
+        <Panel>
+          <div className="text-center py-6 space-y-3">
+            <p className="text-slate-700">Please log in to edit your profile.</p>
+            <a href="#/teacher" className="inline-block bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-6 py-3 rounded-xl font-bold transition">Log in</a>
+          </div>
+        </Panel>
+      </PageShell>
+    );
+  }
+  if (!editing && me?.profile) {
+    return (
+      <PageShell title="You already have a profile">
+        <Panel>
+          <div className="text-center py-6 space-y-3">
+            <p className="text-slate-700">Each login has one profile. You can update it, hide it or delete it.</p>
+            <a href="#/teacher" className="inline-block bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-6 py-3 rounded-xl font-bold transition">Go to my profile</a>
           </div>
         </Panel>
       </PageShell>
@@ -178,10 +225,15 @@ export default function TeacherForm() {
 
   return (
     <PageShell
-      title="Create your teacher profile"
-      subtitle="Free, and it takes about 3 minutes. Schools will see your profile once we've checked it."
+      title={editing ? 'Edit your profile' : 'Create your teacher profile'}
+      subtitle={editing ? 'After you save, we check your changes again before schools can see your profile.' : "Free, and it takes about 3 minutes. Schools will see your profile once we've checked it."}
     >
       <div ref={top} />
+      {!editing && !me && (
+        <div className="mb-5 rounded-2xl bg-white/10 border border-white/25 text-white px-4 py-3 text-sm">
+          <strong>Want to edit or hide your profile later?</strong> <a href="#/teacher" className="underline font-bold">Create a login or log in first</a>, then come back here. Without a login you can still create a profile, but only we can change it.
+        </div>
+      )}
       <Panel>
         {/* progress */}
         <ol className="flex items-center gap-2 mb-6" aria-label="Progress">
@@ -200,15 +252,15 @@ export default function TeacherForm() {
             <>
               <div className="flex items-center gap-4">
                 <div className="w-24 h-24 rounded-full bg-slate-100 border-2 border-dashed border-slate-300 overflow-hidden flex items-center justify-center shrink-0">
-                  {photo ? (
-                    <img src={photo.preview} alt="Your profile preview" className="w-full h-full object-cover" />
+                  {photo || (editing && me?.profile?.photo_url) ? (
+                    <img src={photo ? photo.preview : me.profile.photo_url} alt="Your profile preview" className="w-full h-full object-cover" />
                   ) : (
                     <Camera className="w-8 h-8 text-slate-400" />
                   )}
                 </div>
                 <div className="space-y-1.5">
                   <label className="inline-block cursor-pointer bg-slate-900 hover:bg-slate-700 text-white px-4 py-2.5 rounded-xl text-sm font-bold transition">
-                    {photo ? 'Change photo' : 'Add a photo'}
+                    {photo || (editing && me?.profile?.photo_url) ? 'Change photo' : 'Add a photo'}
                     <input type="file" accept="image/*" className="sr-only" onChange={onPhoto} />
                   </label>
                   <p className="text-sm text-slate-500">Optional, but profiles with a friendly photo get more attention.</p>
@@ -449,7 +501,7 @@ export default function TeacherForm() {
             <PrimaryButton onClick={next}>Next <ChevronRight className="w-5 h-5" /></PrimaryButton>
           ) : (
             <PrimaryButton onClick={submit} disabled={busy}>
-              {busy ? <><Loader2 className="w-5 h-5 animate-spin" /> Sending…</> : 'Send my profile'}
+              {busy ? <><Loader2 className="w-5 h-5 animate-spin" /> Sending…</> : editing ? 'Save and send for review' : 'Send my profile'}
             </PrimaryButton>
           )}
         </div>

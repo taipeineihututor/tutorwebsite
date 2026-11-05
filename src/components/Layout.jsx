@@ -69,7 +69,7 @@ export default function Layout({ route, children }) {
               <span>Schools: post a job</span>
             </a>
             <a
-              href="#/join"
+              href="#/teacher"
               className="flex items-center space-x-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-4 lg:px-6 py-3 rounded-xl text-sm lg:text-base font-bold shadow-lg shadow-emerald-500/20 transition"
             >
               <User className="w-4 h-4" />
@@ -92,7 +92,7 @@ export default function Layout({ route, children }) {
           <nav className="md:hidden border-t border-white/15 px-4 py-3 grid gap-2" onClick={() => setOpen(false)}>
             <a href="#/" className="px-3 py-3 rounded-lg text-white font-semibold bg-white/10">Browse Jobs</a>
             <a href="#/teachers" className="px-3 py-3 rounded-lg text-white font-semibold bg-white/10">Find Teachers</a>
-            <a href="#/join" className="px-3 py-3 rounded-lg text-slate-950 font-bold bg-emerald-500">I'm a Teacher – create my profile</a>
+            <a href="#/teacher" className="px-3 py-3 rounded-lg text-slate-950 font-bold bg-emerald-500">I'm a Teacher – log in / create profile</a>
             <a href="#/school" className="px-3 py-3 rounded-lg text-white font-semibold border border-white/30">I'm a School – log in / register</a>
           </nav>
         )}

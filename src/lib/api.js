@@ -9,6 +9,7 @@ import { supabase, isDemo } from './supabase';
 
 const DEMO_KEY = 'thtw_demo_db_v1';
 const DEMO_ADMIN_KEY = 'thtw_demo_admin';
+const DEMO_TEACHER_KEY = 'thtw_demo_teacher'; // demo mode: the "signed-in" teacher's email
 const DEMO_SCHOOL_KEY = 'thtw_demo_school'; // demo mode: the "signed-in" school's email
 
 const emptyDb = () => ({ teachers: [], jobs: [], inquiries: [], schools: [], contact_views: [] });
@@ -85,7 +86,7 @@ export async function getJobContact(job) {
 export async function listTeachers() {
   if (isDemo) {
     return loadDb()
-      .teachers.filter((t) => t.status === 'approved')
+      .teachers.filter((t) => t.status === 'approved' && !t.hidden)
       .sort(newestFirst)
       .map(toPublicTeacher);
   }
@@ -105,6 +106,7 @@ export async function submitTeacher(payload, photoBlob) {
     const photo_url = photoBlob ? await blobToDataUrl(photoBlob) : null;
     db.teachers.unshift({
       ...payload,
+      user_id: sessionStorage.getItem(DEMO_TEACHER_KEY) || null,
       id: uid(),
       created_at: new Date().toISOString(),
       status: 'pending',
@@ -123,7 +125,9 @@ export async function submitTeacher(payload, photoBlob) {
     photo_url = supabase.storage.from('photos').getPublicUrl(path).data.publicUrl;
   }
   // No .select() here on purpose: visitors may insert but may not read back.
-  const { error } = await supabase.from('teachers').insert({ ...payload, photo_url, status: 'pending' });
+  const { data: sess } = await supabase.auth.getSession();
+  const user_id = sess.session?.user?.id || null; // a signed-in teacher's profile belongs to their login
+  const { error } = await supabase.from('teachers').insert({ ...payload, user_id, photo_url, status: 'pending' });
   if (error) throw error;
 }
 
@@ -270,6 +274,19 @@ export const admin = {
     if (error) throw error;
   },
 
+  // Attach an existing profile to a teacher's login (found by the login's email).
+  async linkTeacher(id, email) {
+    if (isDemo) {
+      const db = loadDb();
+      const row = db.teachers.find((r) => r.id === id);
+      if (row) row.user_id = email.trim().toLowerCase();
+      saveDb(db);
+      return;
+    }
+    const { error } = await supabase.rpc('admin_link_teacher', { p_teacher_id: id, p_email: email });
+    if (error) throw error;
+  },
+
   // A short-lived private link to a school's proof document (the bucket is private).
   async proofUrl(path) {
     if (!path) return null;
@@ -409,3 +426,89 @@ export async function getTeacherContact(teacher) {
   if (error) throw error;
   return data;
 }
+
+/* --------------------- teachers (own login + profile) --------------------- */
+
+export const teacher = {
+  // Returns null (signed out) or { email, userId, profile: row | null }.
+  async session() {
+    if (isDemo) {
+      const email = sessionStorage.getItem(DEMO_TEACHER_KEY);
+      if (!email) return null;
+      return { email, userId: email, profile: loadDb().teachers.find((r) => r.user_id === email) || null };
+    }
+    const { data } = await supabase.auth.getSession();
+    const user = data.session?.user;
+    if (!user) return null;
+    const { data: profile } = await supabase.from('teachers').select('*').eq('user_id', user.id).maybeSingle();
+    return { email: user.email, userId: user.id, profile: profile || null };
+  },
+
+  async signUp(email, password) {
+    if (isDemo) { sessionStorage.setItem(DEMO_TEACHER_KEY, email.toLowerCase()); return { signedIn: true }; }
+    const { data, error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: `${window.location.origin}/#/teacher` } });
+    if (error) throw error;
+    return { signedIn: !!data.session };
+  },
+
+  async signIn(email, password) {
+    if (isDemo) { sessionStorage.setItem(DEMO_TEACHER_KEY, email.toLowerCase()); return; }
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+  },
+
+  async signOut() {
+    if (isDemo) { sessionStorage.removeItem(DEMO_TEACHER_KEY); return; }
+    await supabase.auth.signOut();
+  },
+
+  // Saves changes to the signed-in teacher's own profile. Content changes send it back for review.
+  async update(profile, payload, photoBlob) {
+    if (isDemo) {
+      const db = loadDb();
+      const row = db.teachers.find((r) => r.id === profile.id);
+      if (!row) return;
+      const photo_url = photoBlob ? await blobToDataUrl(photoBlob) : row.photo_url;
+      Object.assign(row, payload, { photo_url, status: 'pending', updated_at: new Date().toISOString() });
+      saveDb(db);
+      return;
+    }
+    let photo_url = profile.photo_url || null;
+    if (photoBlob) {
+      const path = `${uid()}.jpg`;
+      const { error: upErr } = await supabase.storage.from('photos').upload(path, photoBlob, { contentType: 'image/jpeg', cacheControl: '31536000' });
+      if (upErr) throw upErr;
+      const old = photo_url ? photo_url.split('/photos/')[1] : null;
+      photo_url = supabase.storage.from('photos').getPublicUrl(path).data.publicUrl;
+      if (old) await supabase.storage.from('photos').remove([old]); // best effort
+    }
+    const { error } = await supabase.from('teachers').update({ ...payload, photo_url }).eq('id', profile.id);
+    if (error) throw error;
+  },
+
+  // Quick switches that do not need a new review: hide the profile, or share/stop sharing contact details.
+  async setFlags(profile, flags) {
+    if (isDemo) {
+      const db = loadDb();
+      const row = db.teachers.find((r) => r.id === profile.id);
+      if (row) Object.assign(row, flags);
+      saveDb(db);
+      return;
+    }
+    const { error } = await supabase.from('teachers').update(flags).eq('id', profile.id);
+    if (error) throw error;
+  },
+
+  async remove(profile) {
+    if (isDemo) {
+      const db = loadDb();
+      db.teachers = db.teachers.filter((r) => r.id !== profile.id);
+      saveDb(db);
+      return;
+    }
+    const { error } = await supabase.from('teachers').delete().eq('id', profile.id);
+    if (error) throw error;
+    const path = profile.photo_url ? profile.photo_url.split('/photos/')[1] : null;
+    if (path) await supabase.storage.from('photos').remove([path]); // best effort
+  },
+};

@@ -150,6 +150,13 @@ export default function Legal() {
           also disclose information if the law requires it.
         </P>
 
+        <H3>Teacher logins</H3>
+        <P>
+          Teachers can create a login (email and password) to see the status of their profile, edit it, hide it or
+          delete it, and to switch the sharing of their email, phone and intro video on or off. After an edit the profile
+          is reviewed again before it is public. A profile created without a login can only be changed by us.
+        </P>
+
         <H3>How long we keep it, and deleting it</H3>
         <P>
           We keep your information while your profile or job post is on the site, and for a reasonable time afterwards.
