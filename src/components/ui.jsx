@@ -300,7 +300,7 @@ export function ChangePassword({ email, dark = false }) {
       await changePassword(email, cur, nw);
       setState('done');
     } catch (err) {
-      setMsg(err?.code === 'wrong_current' ? err.message : (err?.message || 'Could not change the password. Please try again.'));
+      setMsg(err?.code === 'wrong_current' ? err.message : /different from the old/i.test(String(err?.message)) ? 'The new password is the same as the current one.' : (err?.message || 'Could not change the password. Please try again.'));
       setState('idle');
     }
   };
@@ -392,7 +392,7 @@ export function ResetPassword({ onDone }) {
       await setNewPassword(nw);
       setState('done');
     } catch (err) {
-      setMsg(err?.message || 'Could not change the password. Please request a new link.');
+      setMsg(/different from the old/i.test(String(err?.message)) ? 'Please choose a password you have not used before. This one is the same as your current password.' : (err?.message || 'Could not change the password. Please request a new link.'));
       setState('idle');
     }
   };
