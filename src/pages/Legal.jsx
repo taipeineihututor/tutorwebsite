@@ -61,7 +61,7 @@ function LegalEn({ lang, setLang }) {
           It costs nothing to create a teacher profile or post a job. We verify institutions (see section 5). Teacher
           profiles and the job posts of verified institutions are published straight away, without a review. We may
           take any profile or post offline, or delete it, at any time, for example if it is misleading, a duplicate, not
-          about teaching, or breaks these rules. We do not check what teachers and schools write about themselves.
+          about teaching, or breaks these rules. We do not check what teachers and schools write about themselves or the accuracy of ads and profiles; we only verify institutions before they can see teachers’ contact details.
         </P>
 
         <H3>3. What we ask of you</H3>
@@ -164,6 +164,14 @@ function LegalEn({ lang, setLang }) {
 
         {/* PRIVACY */}
         <H2>Privacy</H2>
+
+        <H3>Who we are</H3>
+        <P>
+          TeachFormosa is run by a company based in Taipei, Taiwan, as a non-profit service. We do not earn money from
+          it, and we do not sell anything to teachers or schools. We are not responsible for checking whether job ads or
+          teacher profiles are accurate. The only check we make is to verify institutions before they are allowed to see
+          teachers’ contact details.
+        </P>
 
         <H3>What we collect</H3>
         <UL items={[
@@ -283,7 +291,7 @@ function LegalZh({ lang, setLang }) {
         <P>TeachFormosa 是一個免費網站，讓台灣的老師與學校互相找到對方。我們不是學校、雇主或人力仲介，不會僱用任何人，不保證任何人能找到工作或老師，也不參與老師與學校之間的任何契約。使用本網站即表示您同意這些條款；若不同意，請勿使用。</P>
 
         <H3>2. 免費刊登與已驗證學校</H3>
-        <P>建立老師檔案或刊登職缺不需任何費用。我們會驗證機構（見第 5 條）。老師檔案與已驗證機構的職缺會立即公開，不經事前審核。若內容不實、重複、與教學無關或違反規定，我們得隨時將其下架或刪除。我們不會查核老師與學校自行填寫的內容。</P>
+        <P>建立老師檔案或刊登職缺不需任何費用。我們會驗證機構（見第 5 條）。老師檔案與已驗證機構的職缺會立即公開，不經事前審核。若內容不實、重複、與教學無關或違反規定，我們得隨時將其下架或刪除。我們不會查核老師與學校自行填寫的內容，也不查核廣告與檔案是否正確；我們只在機構查看老師聯絡資料之前驗證該機構。</P>
 
         <H3>3. 我們對您的要求</H3>
         <UL items={[
@@ -334,6 +342,11 @@ function LegalZh({ lang, setLang }) {
         <P>本條款以中華民國（台灣）法律為準據法。因本網站或本條款與 TeachFormosa 發生的爭議，以台灣有管轄權的法院為管轄法院，並以臺灣臺北地方法院為第一審管轄法院。若本條款任一部分被認定無效，其餘部分仍然有效；我們未立即執行某項規定，不代表放棄該規定。</P>
 
         <H2>隱私權</H2>
+
+        <H3>我們是誰</H3>
+        <P>
+          TeachFormosa 由一家位於台灣台北的公司以非營利方式營運。我們不從中賺取收入，也不向老師或學校銷售任何東西。我們沒有義務查核職缺廣告或老師檔案是否正確；我們唯一的把關，是在機構可查看老師聯絡資料之前先驗證該機構。
+        </P>
 
         <H3>我們蒐集的資料</H3>
         <UL items={[
