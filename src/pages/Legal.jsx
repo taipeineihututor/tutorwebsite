@@ -18,7 +18,7 @@ const Mailto = () => (
 
 export default function Legal() {
   return (
-    <PageShell title="Terms & Privacy" subtitle="In plain English. Last updated 3 November 2026.">
+    <PageShell title="Terms & Privacy" subtitle="In plain English. Last updated 6 November 2026.">
       <Panel>
         {/* The short version */}
         <div className="rounded-2xl bg-emerald-50 border border-emerald-200 p-5">
@@ -30,7 +30,7 @@ export default function Legal() {
               'We never sell your information, and we do not give it to third parties for advertising or marketing.',
               "A teacher's email, phone and intro video are never shown publicly. Only verified institutions can see them, so schools contact teachers directly.",
               'Teacher profiles that have not been used (signed in) for 30 days are hidden. We email a reminder 5 days before.',
-              'Every school, kindergarten, cram school or company is verified by us before it can post jobs (up to 3 at a time) or see teacher contact details.',
+              'Schools can only use teachers’ details to offer them real teaching work, never to pass on, sell or spam.',
             ].map((t) => (
               <li key={t} className="flex gap-2.5">
                 <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
@@ -49,9 +49,10 @@ export default function Legal() {
 
         <H3>1. What TeachFormosa is</H3>
         <P>
-          TeachFormosa is a place where teachers and schools in Taiwan can find each other. We are not a school, an
-          employer or a recruitment agency. We do not hire anyone, we do not promise that anyone will find a job or a
-          teacher, and we do not take part in any contract between a teacher and a school.
+          TeachFormosa is a free website where teachers and schools in Taiwan can find each other. We are not a school,
+          an employer or a recruitment agency. We do not hire anyone, we do not promise that anyone will find a job or a
+          teacher, and we do not take part in any contract between a teacher and a school. By using the site you agree
+          to these terms. If you do not agree, please do not use it.
         </P>
 
         <H3>2. Free to post, and verified schools</H3>
@@ -66,9 +67,13 @@ export default function Legal() {
         <UL items={[
           'Be truthful. Do not post false or misleading information, including about qualifications, pay, or visa status.',
           'Teachers: only create a profile for yourself, and only upload a photo of yourself that you are happy to show publicly.',
-          'Schools: only post for a school you are allowed to recruit for. Do not charge job seekers any fee.',
-          'Do not post anything illegal, discriminatory, abusive or spam, and do not use the site to scam or harass people.',
-          'Do not copy other people’s details from the site or use them for anything other than genuine recruiting.',
+          'Schools: only post for the institution you are registered for, and only for your own vacancies. Do not charge job seekers any fee.',
+          'No posting on behalf of someone else. Third-party posts are not allowed, and neither are posts by recruitment agencies, employment agents, staffing or HR-service companies, or consultants.',
+          'Do not post anything illegal, discriminatory, offensive, abusive or spam, and do not use the site to scam or harass people.',
+          'Do not use the site to advertise products or services, or to run a competing job board, directory or listing service.',
+          'Do not copy, scrape or collect other people’s details or the content of the site, build lists from it, or use it for anything other than genuine recruiting or looking for work.',
+          'Do not try to break, overload or get around the security of the site, or to use someone else’s login.',
+          'Keep your login private. You are responsible for what is done with your account.',
         ]} />
 
         <H3>4. Visas and work permits</H3>
@@ -94,19 +99,67 @@ export default function Legal() {
           person and email) are visible to teachers so they can apply.
         </P>
         <P>
-          Institutions agree to use teachers’ details only to offer them genuine teaching work, not to pass them on, sell
-          them, send advertising or spam. We may remove an institution’s access at any time.
+          Institutions agree to use teachers’ details only to contact them about genuine teaching work at that
+          institution. They must not pass the details to anyone else (including other schools or agencies), sell them,
+          make lists or databases from them, or use them for advertising, events, bulk or unsolicited messages, or any
+          other purpose. Teachers likewise agree to use the contact details in job posts only to apply for that job.
+          Misuse may lead to removal and, where the law allows, legal action.
         </P>
 
-        <H3>6. No guarantees</H3>
+        <H3>6. Dealings between teachers and schools</H3>
         <P>
-          The site is provided as it is. It may sometimes be unavailable or contain mistakes. To the extent the law
-          allows, we are not responsible for what happens between teachers and schools, or for any loss from using the
-          site. Nothing here limits any rights you have that cannot be limited by law.
+          Everything that happens after a teacher and a school get in touch is between them: interviews, contracts, pay,
+          work permits and any dispute. We are not a party to it and cannot resolve it. Both sides are responsible for
+          checking each other out, and for following Taiwan’s labour, immigration and other laws. Please never pay money
+          to someone you have met only through a job post, and tell us if anyone asks you to.
         </P>
 
-        <H3>7. Changes</H3>
-        <P>We may update these terms. The date at the top shows when they were last changed.</P>
+        <H3>7. Content you post</H3>
+        <P>
+          You own what you post. By posting it you give TeachFormosa a free, non-exclusive permission to store, display
+          and share it on the site (and to make technical copies, for example thumbnails and backups) for as long as it is
+          on the site, so that the service works. Only post things you have the right to post, such as your own photo, or
+          a logo your institution allows you to use. The site design, text and code belong to TeachFormosa or its
+          licensors, and you may not copy them without our permission.
+        </P>
+
+        <H3>8. Suspending or ending access</H3>
+        <P>
+          We may remove content, or suspend or end a login or an institution’s access, at any time and without notice, if
+          we believe these rules have been broken or that someone is being harmed. You can stop using the site, and delete
+          your profile or close your posts, whenever you like. A school that closes down or stops recruiting should close
+          its posts.
+        </P>
+
+        <H3>9. No guarantees, and limits on our responsibility</H3>
+        <P>
+          The site is provided “as is” and “as available”. It may sometimes be unavailable, contain mistakes, or link to
+          other websites we do not control. We do not guarantee the accuracy, completeness or timing of anything on it,
+          that every teacher or school is genuine, or that the site is free of viruses or errors. Information on the
+          site is not advice. Please keep your own copy of anything important. To the extent the law allows, we are not
+          responsible for what happens between teachers and schools, for what other users do or write, or for any loss
+          or damage from using the site. Nothing here limits any rights you have that cannot be limited by law.
+        </P>
+
+        <H3>10. If you break the rules</H3>
+        <P>
+          You are responsible for what you post and do on the site. If you break these terms and that causes us or other
+          people loss or a claim, you agree to cover that loss as far as the law allows.
+        </P>
+
+        <H3>11. Changes</H3>
+        <P>
+          We may update these terms at any time. The new version applies once it is posted, and the date at the top shows
+          when they were last changed. If you keep using the site after a change, you accept the new terms.
+        </P>
+
+        <H3>12. Law and courts</H3>
+        <P>
+          These terms are governed by the laws of Taiwan (Republic of China). Any dispute with TeachFormosa about the site
+          or these terms will be brought in the competent courts of Taiwan, with the Taipei District Court as the court of
+          first instance. If any part of these terms is found invalid, the rest still applies. If we do not enforce a rule
+          straight away, that does not mean we give it up.
+        </P>
 
         {/* PRIVACY */}
         <H2>Privacy</H2>
