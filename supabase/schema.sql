@@ -282,3 +282,5 @@ grant select on public.public_teachers to anon, authenticated;
 
 -- UPGRADE NOTE (moderation): run supabase/moderation.sql for the automatic content filter
 -- (words, contact details in teacher text) and visitor reports (2 different reporters put an item on hold).
+
+-- UPGRADE NOTE (mandatory pay): run supabase/pay.sql. New jobs need an hourly and/or monthly pay range (part-time: hourly, full-time: monthly).

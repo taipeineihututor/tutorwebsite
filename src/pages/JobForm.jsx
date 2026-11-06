@@ -8,10 +8,28 @@ import { submitJob, school } from '../lib/api';
 
 const initial = {
   school_name: '', school_type: '', contact_name: '', contact_email: '', apply_link: '',
-  title: '', city: '', district: '', job_type: '', salary: '', arc_offered: '',
+  title: '', city: '', district: '', job_type: '', hourly_min: '', hourly_max: '', monthly_min: '', monthly_max: '', arc_offered: '',
   start_date: '', start_asap: false, schedule: '', description: '', requirements: '',
   consent: false, website: '',
 };
+const num = (v) => { const n = parseInt(String(v).replace(/[^\d]/g, ''), 10); return Number.isFinite(n) ? n : null; };
+const nt = (n) => `NT$${n.toLocaleString('en-US')}`;
+// Pay is mandatory: an hourly range, a monthly range, or both. Part-time needs hourly, full-time needs monthly.
+export function payCheck(f) {
+  const hMin = num(f.hourly_min), hMax = num(f.hourly_max), mMin = num(f.monthly_min), mMax = num(f.monthly_max);
+  const anyH = !!(f.hourly_min || f.hourly_max), anyM = !!(f.monthly_min || f.monthly_max);
+  const okH = hMin != null && hMax != null && hMax >= hMin;
+  const okM = mMin != null && mMax != null && mMax >= mMin;
+  if ((anyH && !okH) || (anyM && !okM)) return { error: 'Please give both a lowest and a highest figure (the highest can be the same), and make sure the highest is not lower.' };
+  if (f.job_type === 'Part-Time' && !okH) return { error: 'Part-time jobs need an hourly pay range, for example NT$600 to NT$1,000 per hour.' };
+  if (f.job_type === 'Full-Time' && !okM) return { error: 'Full-time jobs need a monthly pay range, for example NT$55,000 to NT$75,000 per month.' };
+  if (!okH && !okM) return { error: 'Please enter the pay: an hourly range, a monthly range, or both.' };
+  const bits = [];
+  const range = (a, b) => (a === b ? nt(a) : `${nt(a)}–${nt(b).replace('NT$', '')}`);
+  if (okH) bits.push(`${range(hMin, hMax)} / hour`);
+  if (okM) bits.push(`${range(mMin, mMax)} / month`);
+  return { text: bits.join(' · '), hMin: okH ? hMin : null, hMax: okH ? hMax : null, mMin: okM ? mMin : null, mMax: okM ? mMax : null };
+}
 const blankLoc = () => ({ label: '', address: '', maps_url: '' });
 const MAX_LOCATIONS = 3;
 
@@ -32,7 +50,8 @@ function validate(f) {
   if (f.title.trim().length < 3) e.title = 'Please enter a job title.';
   if (!f.city) e.city = 'Please choose a city.';
   if (!f.job_type) e.job_type = 'Please choose one.';
-  if (!f.salary.trim()) e.salary = 'Please enter the pay (for example NT$70,000–90,000 / month).';
+  const pay = payCheck(f);
+  if (pay.error) e.salary = pay.error;
   if (!f.arc_offered) e.arc_offered = 'Please choose one – teachers look for this first.';
   if (f.description.trim().length < 30) e.description = 'Please describe the job in a few sentences.';
   if (!f.consent) e.consent = 'Please tick the box to continue.';
@@ -110,7 +129,9 @@ export default function JobForm() {
         city: f.city,
         district: f.district.trim() || null,
         job_type: f.job_type,
-        salary: f.salary.trim(),
+        salary: payCheck(f).text,
+        pay_hourly_min: payCheck(f).hMin, pay_hourly_max: payCheck(f).hMax,
+        pay_monthly_min: payCheck(f).mMin, pay_monthly_max: payCheck(f).mMax,
         arc_offered: f.arc_offered,
         start_asap: f.start_asap,
         start_date: f.start_asap ? null : f.start_date || null,
@@ -297,9 +318,26 @@ export default function JobForm() {
             <Chips options={JOB_TYPES} value={f.job_type} onChange={(v) => set('job_type', v)} />
           </Field>
 
-          <Field label="Pay" required error={errors.salary} htmlFor="salary">
-            <input id="salary" className={inputCls} value={f.salary} placeholder="e.g. NT$70,000–90,000 / month, or NT$700–900 / hour"
-              onChange={(e) => set('salary', e.target.value)} />
+          <Field label="Pay (required)" required error={errors.salary} group
+            hint="Show a range, for example NT$600 to NT$1,000 per hour for part-time, or NT$55,000 to NT$75,000 per month for full-time. Part-time needs hourly, full-time needs monthly, and you can give both.">
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm font-semibold text-slate-700 mb-1.5">Per hour (NT$){f.job_type === 'Part-Time' ? ' *' : ''}</p>
+                <div className="flex items-center gap-2">
+                  <input id="hourly_min" inputMode="numeric" aria-label="Hourly pay from" className={inputCls} placeholder="from 600" value={f.hourly_min} onChange={(e) => set('hourly_min', e.target.value)} />
+                  <span className="text-slate-500">to</span>
+                  <input id="hourly_max" inputMode="numeric" aria-label="Hourly pay up to" className={inputCls} placeholder="up to 1,000" value={f.hourly_max} onChange={(e) => set('hourly_max', e.target.value)} />
+                </div>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-slate-700 mb-1.5">Per month (NT$){f.job_type === 'Full-Time' ? ' *' : ''}</p>
+                <div className="flex items-center gap-2">
+                  <input id="monthly_min" inputMode="numeric" aria-label="Monthly pay from" className={inputCls} placeholder="from 55,000" value={f.monthly_min} onChange={(e) => set('monthly_min', e.target.value)} />
+                  <span className="text-slate-500">to</span>
+                  <input id="monthly_max" inputMode="numeric" aria-label="Monthly pay up to" className={inputCls} placeholder="up to 75,000" value={f.monthly_max} onChange={(e) => set('monthly_max', e.target.value)} />
+                </div>
+              </div>
+            </div>
           </Field>
 
           <Field label="Can your school offer a Work Permit (support ARC)?" required error={errors.arc_offered} group>
