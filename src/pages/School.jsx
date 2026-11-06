@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import SavedList from '../components/SavedList';
 import { BadgeCheck, CheckCircle2, Clock, FileUp, Loader2, LogOut, ShieldCheck, XCircle } from 'lucide-react';
-import { Banner, Field, inputCls, PageShell, Panel, PrimaryButton, SecondaryButton } from '../components/ui';
+import { ChangePassword, Banner, Field, inputCls, PageShell, Panel, PrimaryButton, SecondaryButton } from '../components/ui';
 import { CITIES, SCHOOL_TYPES } from '../lib/constants';
 import { MAX_ACTIVE_POSTS, school } from '../lib/api';
 
@@ -336,6 +336,7 @@ export default function School() {
       <button type="button" onClick={signOut} className="inline-flex items-center gap-1.5 font-semibold text-slate-600 hover:text-slate-900 shrink-0"><LogOut className="w-4 h-4" /> Sign out</button>
     </div>
   );
+  const pw = <div className="mb-5 -mt-2"><ChangePassword email={session.email} /></div>;
 
   let body;
   if (!reg || editing) {
@@ -368,7 +369,7 @@ export default function School() {
 
   return (
     <PageShell title="Schools & institutions">
-      <Panel>{header}{body}</Panel>
+      <Panel>{header}{pw}{body}</Panel>
     </PageShell>
   );
 }

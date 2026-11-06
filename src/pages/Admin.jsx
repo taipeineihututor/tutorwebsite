@@ -3,7 +3,7 @@ import { Check, X, Trash2, ChevronDown, Loader2, LogOut, Mail, MessageSquare, Us
 import { admin } from '../lib/api';
 import { geocodeBest, sleep } from '../lib/geocode';
 import { isDemo } from '../lib/supabase';
-import { Banner, Field, inputCls, PrimaryButton, SecondaryButton, Panel } from '../components/ui';
+import { ChangePassword, Banner, Field, inputCls, PrimaryButton, SecondaryButton, Panel } from '../components/ui';
 import { DAYS, SLOTS, VISA_SHORT, ARC_NEEDS, experienceLabel, fmtDate } from '../lib/constants';
 
 const TABS = [
@@ -477,6 +477,7 @@ export default function Admin() {
             <LogOut className="w-4 h-4" /> Sign out
           </button>
         </div>
+        <div className="mb-4"><ChangePassword email={session.email} dark /></div>
 
         <div className="flex gap-2 mb-4 overflow-x-auto">
           {TABS.filter((t) => t.key !== 'inquiries' || data.inquiries.length > 0).map((t) => {

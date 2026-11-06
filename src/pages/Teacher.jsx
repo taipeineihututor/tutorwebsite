@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Clock, EyeOff, Eye, Loader2, LogOut, Pencil, Trash2, XCircle, CheckCircle2, User } from 'lucide-react';
-import { Banner, Field, inputCls, PageShell, Panel, PrimaryButton, SecondaryButton } from '../components/ui';
+import { ChangePassword, Banner, Field, inputCls, PageShell, Panel, PrimaryButton, SecondaryButton } from '../components/ui';
 import { teacher, displayName } from '../lib/api';
 import SavedList from '../components/SavedList';
 
@@ -113,6 +113,7 @@ export default function Teacher() {
           <span className="text-slate-500 break-all">Signed in as <strong className="text-slate-800">{session.email}</strong></span>
           <button type="button" onClick={signOut} className="inline-flex items-center gap-1.5 font-semibold text-slate-600 hover:text-slate-900 shrink-0"><LogOut className="w-4 h-4" /> Sign out</button>
         </div>
+        <div className="mb-5 -mt-2"><ChangePassword email={session.email} /></div>
 
         {!p ? (
           <div className="text-center py-6 space-y-3">

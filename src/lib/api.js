@@ -177,6 +177,17 @@ export async function submitInquiry(payload) {
   if (error) throw error;
 }
 
+/* ----------------------------- change password --------------------------- */
+
+// Shared by admins, schools and teachers (one Supabase Auth account each). Re-checks the current password first.
+export async function changePassword(email, current, next) {
+  if (isDemo) return;
+  const { error: e1 } = await supabase.auth.signInWithPassword({ email, password: current });
+  if (e1) { const err = new Error('Your current password is not correct.'); err.code = 'wrong_current'; throw err; }
+  const { error } = await supabase.auth.updateUser({ password: next });
+  if (error) throw error;
+}
+
 /* -------------------------------- admin --------------------------------- */
 
 export const admin = {

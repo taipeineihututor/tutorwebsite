@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Check, AlertCircle, Heart, Flag } from 'lucide-react';
-import { reportItem, REPORT_REASONS } from '../lib/api';
+import { reportItem, REPORT_REASONS, changePassword } from '../lib/api';
+import { KeyRound } from 'lucide-react';
 
 export const inputCls =
   'w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-base text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:bg-white transition';
@@ -274,6 +275,62 @@ export function ReportButton({ kind, id }) {
             <button type="button" onClick={() => setOpen(false)} className="px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-bold text-slate-600">Cancel</button>
           </div>
         </div>
+      )}
+    </div>
+  );
+}
+
+// "Change password" link that opens a small form. `dark` is for the admin page's dark background.
+export function ChangePassword({ email, dark = false }) {
+  const [open, setOpen] = useState(false);
+  const [cur, setCur] = useState('');
+  const [nw, setNw] = useState('');
+  const [again, setAgain] = useState('');
+  const [state, setState] = useState('idle'); // idle | busy | done
+  const [msg, setMsg] = useState('');
+  const close = () => { setOpen(false); setCur(''); setNw(''); setAgain(''); setMsg(''); setState('idle'); };
+  const save = async (e) => {
+    e.preventDefault();
+    setMsg('');
+    if (nw.length < 8) return setMsg('The new password must be at least 8 characters.');
+    if (nw !== again) return setMsg('The two new passwords do not match.');
+    if (nw === cur) return setMsg('The new password is the same as the current one.');
+    setState('busy');
+    try {
+      await changePassword(email, cur, nw);
+      setState('done');
+    } catch (err) {
+      setMsg(err?.code === 'wrong_current' ? err.message : (err?.message || 'Could not change the password. Please try again.'));
+      setState('idle');
+    }
+  };
+  const link = dark ? 'text-slate-300 hover:text-white' : 'text-slate-600 hover:text-slate-900';
+  if (!open) {
+    return (
+      <button type="button" onClick={() => setOpen(true)} className={`inline-flex items-center gap-1.5 text-sm font-semibold ${link}`}>
+        <KeyRound className="w-4 h-4" /> Change password
+      </button>
+    );
+  }
+  return (
+    <div className="bg-white text-slate-900 rounded-xl border border-slate-200 p-4 my-3 max-w-md">
+      {state === 'done' ? (
+        <div className="space-y-3">
+          <p className="flex items-center gap-2 font-semibold text-emerald-700"><Check className="w-4 h-4" /> Password changed.</p>
+          <SecondaryButton type="button" onClick={close}>Close</SecondaryButton>
+        </div>
+      ) : (
+        <form onSubmit={save} className="space-y-3">
+          <p className="font-bold">Change password</p>
+          <Field label="Current password" htmlFor="cp-cur"><input id="cp-cur" type="password" autoComplete="current-password" className={inputCls} value={cur} onChange={(e) => setCur(e.target.value)} required /></Field>
+          <Field label="New password" hint="At least 8 characters" htmlFor="cp-new"><input id="cp-new" type="password" autoComplete="new-password" className={inputCls} value={nw} onChange={(e) => setNw(e.target.value)} required /></Field>
+          <Field label="New password again" htmlFor="cp-again"><input id="cp-again" type="password" autoComplete="new-password" className={inputCls} value={again} onChange={(e) => setAgain(e.target.value)} required /></Field>
+          {msg && <p role="alert" className="flex items-start gap-2 text-sm text-red-700"><AlertCircle className="w-4 h-4 mt-0.5 shrink-0" /> {msg}</p>}
+          <div className="flex gap-2">
+            <PrimaryButton type="submit" disabled={state === 'busy'}>{state === 'busy' ? 'Saving…' : 'Save new password'}</PrimaryButton>
+            <SecondaryButton type="button" onClick={close}>Cancel</SecondaryButton>
+          </div>
+        </form>
       )}
     </div>
   );
