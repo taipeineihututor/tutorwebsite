@@ -4,7 +4,8 @@ import { listTeachers, getTeacherContact, school } from '../lib/api';
 import {
   CITIES, SUBJECTS, EXPERIENCE, EDUCATION, VISA_STATUSES, VISA_SHORT, CERTIFICATES, DAYS, SLOTS, isVideoLink, normalizeCountry, fmtDate, fmtMonth, experienceLabel,
 } from '../lib/constants';
-import { AvailabilityMini, Banner } from '../components/ui';
+import { AvailabilityMini, Banner, SaveButton } from '../components/ui';
+import { useSaved } from '../lib/useSaved';
 
 const selectCls =
   'w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:bg-white transition';
@@ -26,7 +27,7 @@ const CHECKS = [
 const arcText = { yes: 'Needs ARC sponsorship', no: 'Can already work legally', unsure: 'ARC sponsorship: not sure yet' };
 
 // Contact details: only verified institutions can reveal them, one teacher at a time (logged on the server).
-function ContactBox({ t, verified }) {
+export function ContactBox({ t, verified }) {
   const [info, setInfo] = useState(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
@@ -82,7 +83,7 @@ function ContactBox({ t, verified }) {
   );
 }
 
-function TeacherCard({ t, verified }) {
+export function TeacherCard({ t, verified, sv = null }) {
   const where = t.cities?.length ? t.cities.join(', ') : '';
   return (
     <article className="bg-white text-slate-900 border border-white rounded-2xl p-5 sm:p-6 shadow-lg shadow-black/20 hover:shadow-xl transition">
@@ -95,7 +96,10 @@ function TeacherCard({ t, verified }) {
           )}
         </div>
         <div className="min-w-0">
-          <h3 className="text-lg font-black text-slate-900">{t.display_name}</h3>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <h3 className="text-lg font-black text-slate-900">{t.display_name}</h3>
+            <SaveButton sv={sv} id={t.id} />
+          </div>
           <p className="text-slate-700 text-sm">{t.nationality}{t.native_english === 'yes' ? ' · Native English speaker' : ''}</p>
           <div className="mt-2 flex flex-wrap gap-2 text-xs font-semibold">
             <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border ${t.needs_arc === 'yes' ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-green-50 text-green-800 border-green-200'}`}>
@@ -168,6 +172,8 @@ export default function Teachers() {
   const [minExp, setMinExp] = useState('any');
   const [checks, setChecks] = useState({});
   const [verified, setVerified] = useState(false);
+  const [savedOnly, setSavedOnly] = useState(false);
+  const sv = useSaved('teacher');
 
   useEffect(() => {
     school.session().then((s) => setVerified(s?.registration?.status === 'approved')).catch(() => {});
@@ -206,6 +212,7 @@ export default function Teachers() {
           const free = (d) => (t.availability?.[d] || []).length > 0 && (slot === 'any' || (t.availability[d] || []).includes(slot));
           if (!(days.length ? wanted.every(free) : wanted.some(free))) return false;
         }
+        if (savedOnly && sv.enabled && !sv.has(t.id)) return false;
         if (subject !== 'Any' && !(t.subjects || []).includes(subject)) return false;
         if (minExp !== 'any' && EXP_ORDER.indexOf(t.experience) < EXP_ORDER.indexOf(minExp)) return false;
         if (checks.in && !t.in_taiwan) return false;
@@ -220,10 +227,10 @@ export default function Teachers() {
         if (checks.part && !(t.job_types || []).includes('Part-Time')) return false;
         return true;
       }),
-    [teachers, city, country, subject, education, visa, days, slot, minExp, checks, today],
+    [teachers, city, country, subject, education, visa, days, slot, minExp, checks, today, savedOnly, sv],
   );
 
-  const reset = () => { setCity('All Locations'); setCountry('Any'); setSubject('Any'); setEducation('any'); setVisa('any'); setDays([]); setSlot('any'); setMinExp('any'); setChecks({}); };
+  const reset = () => { setCity('All Locations'); setCountry('Any'); setSubject('Any'); setEducation('any'); setVisa('any'); setDays([]); setSlot('any'); setMinExp('any'); setChecks({}); setSavedOnly(false); };
 
   return (
     <section className="px-4 sm:px-6 lg:px-8 py-10 sm:py-14 bg-gradient-to-b from-[#2A4DB5] to-[#1D3A8C]">
@@ -313,6 +320,13 @@ export default function Teachers() {
                 </label>
               ))}
             </div>
+            {sv.enabled && (
+              <label className="mt-4 flex items-center gap-2.5 cursor-pointer select-none">
+                <input type="checkbox" checked={savedOnly} onChange={(e) => setSavedOnly(e.target.checked)}
+                  className="w-4 h-4 rounded border-slate-300 text-rose-600 focus:ring-rose-600" />
+                <span className="text-sm font-semibold text-slate-700">Only my saved teachers ({sv.count})</span>
+              </label>
+            )}
             <div className="mt-4 text-right">
               <button type="button" onClick={reset} className="text-sm font-semibold text-slate-500 hover:text-slate-900">Reset filters</button>
             </div>
@@ -340,7 +354,7 @@ export default function Teachers() {
               )}
             </div>
           )}
-          {filtered.map((t) => <TeacherCard key={t.id} t={t} verified={verified} />)}
+          {filtered.map((t) => <TeacherCard key={t.id} t={t} verified={verified} sv={sv} />)}
         </div>
       </div>
 

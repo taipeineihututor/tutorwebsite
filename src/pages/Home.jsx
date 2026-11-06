@@ -4,7 +4,8 @@ import {
 } from 'lucide-react';
 import { listJobs, getJobContact } from '../lib/api';
 import { CITIES, SCHOOL_TYPES, CITY_COORDS, fmtDate, mapsUrl } from '../lib/constants';
-import { Banner } from '../components/ui';
+import { Banner, SaveButton } from '../components/ui';
+import { useSaved } from '../lib/useSaved';
 import { geocodeBest, readGeoCache, writeGeoCache, sleep } from '../lib/geocode';
 
 const selectCls =
@@ -31,7 +32,7 @@ function mapPoints(jobs, geo = {}) {
   return pts;
 }
 
-function JobCard({ job, defaultOpen = false }) {
+export function JobCard({ job, defaultOpen = false, sv = null }) {
   const [open, setOpen] = useState(defaultOpen);
   const [email, setEmail] = useState('');
   const [emailBusy, setEmailBusy] = useState(false);
@@ -62,11 +63,14 @@ function JobCard({ job, defaultOpen = false }) {
             <p className="text-slate-700 font-medium">{job.school_name}</p>
           </div>
         </div>
-        {job.arc_offered === 'yes' && (
-          <span className="inline-flex items-center gap-1.5 self-start bg-emerald-50 text-emerald-900 border border-emerald-200 px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap">
-            <CheckCircle2 className="w-3.5 h-3.5" /> Can offer Work Permit (ARC)
-          </span>
-        )}
+        <div className="flex flex-wrap items-center gap-2 self-start">
+          {job.arc_offered === 'yes' && (
+            <span className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-900 border border-emerald-200 px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap">
+              <CheckCircle2 className="w-3.5 h-3.5" /> Can offer Work Permit (ARC)
+            </span>
+          )}
+          <SaveButton sv={sv} id={job.id} />
+        </div>
       </div>
 
       <div className="mt-3 flex flex-wrap gap-2 text-sm text-slate-700">
@@ -160,6 +164,8 @@ export default function Home() {
   const [selectedSchoolType, setSelectedSchoolType] = useState('All School Types');
   const [selectedJobType, setSelectedJobType] = useState('Full & Part Time');
   const [arcOnly, setArcOnly] = useState(false);
+  const [savedOnly, setSavedOnly] = useState(false);
+  const sv = useSaved('job');
   const [view, setView] = useState('list'); // list | map
   const [selectedId, setSelectedId] = useState(null);
   const selectedRef = useRef(null);
@@ -180,9 +186,10 @@ export default function Home() {
       if (selectedSchoolType !== 'All School Types' && j.school_type !== selectedSchoolType) return false;
       if (selectedJobType !== 'Full & Part Time' && j.job_type !== selectedJobType && j.job_type !== 'Full or Part-Time') return false;
       if (arcOnly && j.arc_offered !== 'yes') return false;
+      if (savedOnly && sv.enabled && !sv.has(j.id)) return false;
       return true;
     });
-  }, [jobs, searchTerm, selectedLocation, selectedSchoolType, selectedJobType, arcOnly]);
+  }, [jobs, searchTerm, selectedLocation, selectedSchoolType, selectedJobType, arcOnly, savedOnly, sv]);
 
   // Ads posted before addresses were placed on the map: look the addresses up now (once, then cached).
   const [geo, setGeo] = useState(readGeoCache);
@@ -212,7 +219,7 @@ export default function Home() {
 
   const reset = () => {
     setSearchTerm(''); setSelectedLocation('All Locations'); setSelectedSchoolType('All School Types');
-    setSelectedJobType('Full & Part Time'); setArcOnly(false);
+    setSelectedJobType('Full & Part Time'); setArcOnly(false); setSavedOnly(false);
   };
 
   return (
@@ -317,6 +324,13 @@ export default function Home() {
                   className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-600" />
                 <span className="text-sm font-semibold text-slate-700">Can offer Work Permit (support ARC)</span>
               </label>
+              {sv.enabled && (
+                <label className="flex items-center space-x-2 cursor-pointer select-none">
+                  <input type="checkbox" checked={savedOnly} onChange={(e) => setSavedOnly(e.target.checked)}
+                    className="w-4 h-4 rounded border-slate-300 text-rose-600 focus:ring-rose-600" />
+                  <span className="text-sm font-semibold text-slate-700">Only my saved jobs ({sv.count})</span>
+                </label>
+              )}
               <div className="flex items-center space-x-4 text-sm">
                 <button onClick={reset} className="text-slate-500 hover:text-slate-900 font-semibold transition">Reset Filters</button>
                 <span className="bg-emerald-50 text-emerald-800 font-bold px-3.5 py-1.5 rounded-xl border border-emerald-100">
@@ -369,10 +383,10 @@ export default function Home() {
             )}
 
             {view === 'map' && selectedJob && (
-              <div ref={selectedRef}><JobCard key={selectedJob.id} job={selectedJob} defaultOpen /></div>
+              <div ref={selectedRef}><JobCard key={selectedJob.id} job={selectedJob} defaultOpen sv={sv} /></div>
             )}
 
-            {view === 'list' && filtered.map((j) => <JobCard key={j.id} job={j} />)}
+            {view === 'list' && filtered.map((j) => <JobCard key={j.id} job={j} sv={sv} />)}
           </div>
         </div>
       </section>

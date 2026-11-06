@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Clock, EyeOff, Eye, Loader2, LogOut, Pencil, Trash2, XCircle, CheckCircle2, User } from 'lucide-react';
 import { Banner, Field, inputCls, PageShell, Panel, PrimaryButton, SecondaryButton } from '../components/ui';
 import { teacher, displayName } from '../lib/api';
+import SavedList from '../components/SavedList';
 
 const emailOk = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 
@@ -166,6 +167,7 @@ export default function Teacher() {
             {err && <Banner tone="error">{err}</Banner>}
           </div>
         )}
+        <div className="mt-8 pt-6 border-t border-slate-200"><SavedList kind="job" /></div>
       </Panel>
     </PageShell>
   );

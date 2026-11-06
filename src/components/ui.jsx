@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Check, AlertCircle } from 'lucide-react';
+import { Check, AlertCircle, Heart } from 'lucide-react';
 
 export const inputCls =
   'w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-base text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:bg-white transition';
@@ -212,5 +212,22 @@ export function ComboInput({ id, value, onChange, options, placeholder }) {
         </ul>
       )}
     </div>
+  );
+}
+
+// Heart button for the private saved lists. Only rendered when `sv.enabled` (signed in as the right kind of user).
+export function SaveButton({ sv, id, className = '' }) {
+  if (!sv?.enabled) return null;
+  const on = sv.has(id);
+  return (
+    <button
+      type="button"
+      onClick={() => sv.toggle(id)}
+      aria-pressed={on}
+      title={on ? 'Saved (only you can see this). Click to remove.' : 'Save to your private list'}
+      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-bold transition shrink-0 ${on ? 'bg-rose-50 border-rose-300 text-rose-700' : 'bg-white border-slate-300 text-slate-600 hover:border-rose-300 hover:text-rose-700'}`}
+    >
+      <Heart className={`w-4 h-4 ${on ? 'fill-rose-500 text-rose-500' : ''}`} /> {on ? 'Saved' : 'Save'}
+    </button>
   );
 }

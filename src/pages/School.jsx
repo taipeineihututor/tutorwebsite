@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import SavedList from '../components/SavedList';
 import { BadgeCheck, CheckCircle2, Clock, FileUp, Loader2, LogOut, ShieldCheck, XCircle } from 'lucide-react';
 import { Banner, Field, inputCls, PageShell, Panel, PrimaryButton, SecondaryButton } from '../components/ui';
 import { CITIES, SCHOOL_TYPES } from '../lib/constants';
@@ -279,7 +280,7 @@ function Dashboard({ session, onChange }) {
         <BadgeCheck className="w-8 h-8 text-emerald-600 shrink-0" />
         <div>
           <p className="font-black text-slate-900">{reg.institution_name} is a verified institution</p>
-          <p className="text-sm text-slate-700">You can now post jobs and use “Show contact details” on teacher profiles that chose to share them.</p>
+          <p className="text-sm text-slate-700">You can now post jobs and use “Show contact details” on teacher profiles.</p>
         </div>
       </div>
 
@@ -289,6 +290,8 @@ function Dashboard({ session, onChange }) {
           : <Banner tone="warn">You have {MAX_ACTIVE_POSTS} active posts, the maximum. Close one to post another.</Banner>}
         <a href="#/teachers" className="font-bold text-emerald-700 hover:underline">Find teachers →</a>
       </div>
+
+      <SavedList kind="teacher" />
 
       <div>
         <h2 className="text-lg font-black text-slate-900 mb-1">My posts</h2>

@@ -12,7 +12,7 @@ const DEMO_ADMIN_KEY = 'thtw_demo_admin';
 const DEMO_TEACHER_KEY = 'thtw_demo_teacher'; // demo mode: the "signed-in" teacher's email
 const DEMO_SCHOOL_KEY = 'thtw_demo_school'; // demo mode: the "signed-in" school's email
 
-const emptyDb = () => ({ teachers: [], jobs: [], inquiries: [], schools: [], contact_views: [] });
+const emptyDb = () => ({ teachers: [], jobs: [], inquiries: [], schools: [], contact_views: [], saved: [] });
 const loadDb = () => {
   try {
     return { ...emptyDb(), ...(JSON.parse(localStorage.getItem(DEMO_KEY)) || {}) };
@@ -516,5 +516,68 @@ export const teacher = {
     if (error) throw error;
     const path = profile.photo_url ? profile.photo_url.split('/photos/')[1] : null;
     if (path) await supabase.storage.from('photos').remove([path]); // best effort
+  },
+};
+
+
+/* ------------- private saved lists (teachers: jobs, schools: teachers) ------------- */
+
+// Demo mode: whose list is it? Jobs belong to the signed-in teacher, teachers to the signed-in school.
+const savedOwner = (kind) => sessionStorage.getItem(kind === 'job' ? DEMO_TEACHER_KEY : DEMO_SCHOOL_KEY);
+
+export const saved = {
+  async list(kind) {
+    if (isDemo) {
+      const me = savedOwner(kind);
+      return me ? (loadDb().saved || []).filter((r) => r.owner === me && r.kind === kind) : [];
+    }
+    const { data, error } = await supabase
+      .from('saved_items')
+      .select('item_id, contacted_at, note, created_at')
+      .eq('kind', kind)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return data;
+  },
+
+  async add(kind, itemId) {
+    if (isDemo) {
+      const me = savedOwner(kind);
+      if (!me) throw new Error('Please log in first.');
+      const db = loadDb();
+      if (!db.saved.some((r) => r.owner === me && r.kind === kind && r.item_id === itemId)) {
+        db.saved.unshift({ owner: me, kind, item_id: itemId, contacted_at: null, note: null, created_at: new Date().toISOString() });
+        saveDb(db);
+      }
+      return;
+    }
+    const { error } = await supabase.from('saved_items').upsert({ kind, item_id: itemId }, { onConflict: 'user_id,kind,item_id', ignoreDuplicates: true });
+    if (error) throw error;
+  },
+
+  async remove(kind, itemId) {
+    if (isDemo) {
+      const me = savedOwner(kind);
+      const db = loadDb();
+      db.saved = db.saved.filter((r) => !(r.owner === me && r.kind === kind && r.item_id === itemId));
+      saveDb(db);
+      return;
+    }
+    const { error } = await supabase.from('saved_items').delete().eq('kind', kind).eq('item_id', itemId);
+    if (error) throw error;
+  },
+
+  // patch: { contacted_at: iso | null, note: string | null }
+  async update(kind, itemId, patch) {
+    if (isDemo) {
+      const me = savedOwner(kind);
+      const db = loadDb();
+      const row = db.saved.find((r) => r.owner === me && r.kind === kind && r.item_id === itemId);
+      if (row) Object.assign(row, patch);
+      saveDb(db);
+      return;
+    }
+    const { error } = await supabase.from('saved_items').update(patch).eq('kind', kind).eq('item_id', itemId);
+    if (error) throw error;
   },
 };
