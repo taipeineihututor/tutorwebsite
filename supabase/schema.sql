@@ -279,3 +279,6 @@ grant select on public.public_teachers to anon, authenticated;
 
 -- UPGRADE NOTE (saved lists): run supabase/saved.sql to add the private saved_items table
 -- (teachers save jobs, verified schools save teachers, with "contacted" and a private note).
+
+-- UPGRADE NOTE (moderation): run supabase/moderation.sql for the automatic content filter
+-- (words, contact details in teacher text) and visitor reports (2 different reporters put an item on hold).

@@ -307,7 +307,7 @@ function Dashboard({ session, onChange }) {
                 <div className="min-w-0">
                   <p className="font-bold text-slate-900 break-words">{j.title} <span className="font-normal text-slate-500">· {j.city}</span></p>
                   <span className={`inline-block mt-1 px-2.5 py-0.5 rounded-full text-xs font-bold ${st.cls}`}>{st.label}</span>
-                  {j.status === 'rejected' && j.admin_note && <p className="text-sm text-slate-600 mt-1 whitespace-pre-line">{j.admin_note}</p>}
+                  {(j.status === 'rejected' || j.status === 'pending') && j.admin_note && <p className="text-sm text-slate-600 mt-1 whitespace-pre-line">{j.admin_note}</p>}
                 </div>
                 {isActive(j) && <SecondaryButton disabled={busy === j.id} onClick={() => close(j)} className="!py-2 !text-sm">Close this post</SecondaryButton>}
               </li>

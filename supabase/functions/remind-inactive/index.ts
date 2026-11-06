@@ -5,7 +5,7 @@
 // so real teachers only get the email after a domain is verified in Resend and MAIL_FROM is set.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
-const SITE = 'https://tutorwebsite-pied.vercel.app';
+const SITE = 'https://www.teachformosa.com';
 const DAY = 86400000;
 const esc = (v: unknown) =>
   String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));

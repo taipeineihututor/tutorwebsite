@@ -4,7 +4,7 @@ import {
 } from 'lucide-react';
 import { listJobs, getJobContact } from '../lib/api';
 import { CITIES, SCHOOL_TYPES, CITY_COORDS, fmtDate, mapsUrl } from '../lib/constants';
-import { Banner, SaveButton } from '../components/ui';
+import { Banner, SaveButton, ReportButton } from '../components/ui';
 import { useSaved } from '../lib/useSaved';
 import { geocodeBest, readGeoCache, writeGeoCache, sleep } from '../lib/geocode';
 
@@ -152,6 +152,7 @@ export function JobCard({ job, defaultOpen = false, sv = null }) {
           </div>
         </div>
       )}
+      <ReportButton kind="job" id={job.id} />
     </article>
   );
 }

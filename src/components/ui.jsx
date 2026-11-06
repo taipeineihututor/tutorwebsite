@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Check, AlertCircle, Heart } from 'lucide-react';
+import { Check, AlertCircle, Heart, Flag } from 'lucide-react';
+import { reportItem, REPORT_REASONS } from '../lib/api';
 
 export const inputCls =
   'w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-base text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:bg-white transition';
@@ -229,5 +230,51 @@ export function SaveButton({ sv, id, className = '' }) {
     >
       <Heart className={`w-4 h-4 ${on ? 'fill-rose-500 text-rose-500' : ''}`} /> {on ? 'Saved' : 'Save'}
     </button>
+  );
+}
+
+// Small "Report" link + inline form. Two different reporters put the item on hold until the admin has looked at it.
+export function ReportButton({ kind, id }) {
+  const [open, setOpen] = useState(false);
+  const [reason, setReason] = useState(REPORT_REASONS[0]);
+  const [detail, setDetail] = useState('');
+  const [state, setState] = useState('idle'); // idle | busy | done | error
+  const [msg, setMsg] = useState('');
+  const send = async () => {
+    setState('busy');
+    setMsg('');
+    try {
+      await reportItem(kind, id, reason, detail.trim());
+      setState('done');
+    } catch (e) {
+      setMsg(e?.code === 'P0001' && e.message ? e.message : 'Could not send the report. Please try again later.');
+      setState('error');
+    }
+  };
+  if (state === 'done') return <p className="text-xs font-semibold text-slate-500 mt-3">Thank you. We will look at this.</p>;
+  return (
+    <div className="mt-3">
+      {!open ? (
+        <button type="button" onClick={() => setOpen(true)} className="inline-flex items-center gap-1 text-xs font-semibold text-slate-400 hover:text-red-600 transition">
+          <Flag className="w-3.5 h-3.5" /> Report
+        </button>
+      ) : (
+        <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-2 text-sm">
+          <label className="block">
+            <span className="text-xs font-bold text-slate-600">What is wrong?</span>
+            <select value={reason} onChange={(e) => setReason(e.target.value)} className="mt-1 w-full bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-sm">
+              {REPORT_REASONS.map((r) => <option key={r}>{r}</option>)}
+            </select>
+          </label>
+          <input type="text" maxLength={300} value={detail} onChange={(e) => setDetail(e.target.value)} placeholder="Anything else we should know? (optional)"
+            aria-label="Report details" className="w-full bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-sm" />
+          {msg && <p role="alert" className="text-xs font-semibold text-red-600">{msg}</p>}
+          <div className="flex gap-2">
+            <button type="button" onClick={send} disabled={state === 'busy'} className="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-500 disabled:opacity-60 text-white text-xs font-bold">Send report</button>
+            <button type="button" onClick={() => setOpen(false)} className="px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-bold text-slate-600">Cancel</button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

@@ -182,7 +182,7 @@ function NotePanel({ kind, item, busy, onSave, onClose }) {
   );
 }
 
-function Row({ kind, item, all, lastActive, onSet, onDelete, onNote, onTouch, onLink, busy, views, names }) {
+function Row({ kind, item, all, lastActive, onSet, onDelete, onNote, onTouch, onLink, busy, views, names, reports }) {
   const [open, setOpen] = useState(false);
   const [noting, setNoting] = useState(false);
   // Same email (teacher) or same school + title (job) elsewhere in the list = probably a repeat.
@@ -199,6 +199,9 @@ function Row({ kind, item, all, lastActive, onSet, onDelete, onNote, onTouch, on
   const mine = (views || []).filter((v) => (isTeacher ? v.teacher_id === item.id : isSchool ? v.school_id === item.id : false));
   if (isTeacher && mine.length) rows.push(['Contact viewed by', mine.map((v) => `${names.schools[v.school_id] || 'a school'} (${new Date(v.viewed_at).toLocaleDateString()})`).join('\n')]);
   if (isSchool && mine.length) rows.push([`Teachers viewed (${mine.length})`, mine.map((v) => `${names.teachers[v.teacher_id] || 'a teacher'} (${new Date(v.viewed_at).toLocaleDateString()})`).join('\n')]);
+  const myReports = (reports || []).filter((r) => r.item_id === item.id && r.kind === (isTeacher ? 'teacher' : 'job'));
+  if (item.flag_reason) rows.unshift(['On hold because', item.flag_reason]);
+  if (myReports.length) rows.unshift([`Reports (${myReports.length})`, myReports.map((r) => `${r.reason}${r.detail ? `: ${r.detail}` : ''} (${new Date(r.created_at).toLocaleDateString()})`).join('\n')]);
   const title = isTeacher ? item.full_name : isSchool ? item.institution_name : item.title;
   const sub = isTeacher ? `${item.nationality} · ${item.email}` : isSchool ? `${item.institution_type || ''} · ${item.tax_id ? `tax ID ${item.tax_id}` : 'no tax ID'} · ${item.city || ''}` : `${item.school_name} · ${item.city}`;
   const [proofErr, setProofErr] = useState('');
@@ -222,6 +225,11 @@ function Row({ kind, item, all, lastActive, onSet, onDelete, onNote, onTouch, on
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="font-black text-slate-900">{title}</h3>
             <StatusPill status={item.status} />
+            {(item.flag_reason || myReports.length > 0) && (
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-800">
+                {item.flag_reason ? `on hold: ${item.flag_reason.replace('Automatic check: ', 'filter: ')}` : `${myReports.length} report${myReports.length > 1 ? 's' : ''}`}
+              </span>
+            )}
             {dupes.length > 0 && <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-orange-100 text-orange-800">possible duplicate ×{dupes.length}</span>}
             {item.admin_note && <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-sky-100 text-sky-800">note saved</span>}
             {item.closed_at && <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-200 text-slate-700">closed by school</span>}
@@ -343,7 +351,7 @@ export default function Admin() {
   const [session, setSession] = useState(undefined); // undefined = still checking
   const [tab, setTab] = useState('teachers');
   const [status, setStatus] = useState('approved');
-  const [data, setData] = useState({ teachers: [], jobs: [], inquiries: [], schools: [], views: [] });
+  const [data, setData] = useState({ teachers: [], jobs: [], inquiries: [], schools: [], views: [], reports: [] });
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -355,10 +363,10 @@ export default function Admin() {
     setLoading(true);
     setError('');
     try {
-      const [teachers, jobs, inquiries, schools, views] = await Promise.all([
-        admin.list('teachers'), admin.list('jobs'), admin.list('inquiries'), admin.list('schools'), admin.contactViews(),
+      const [teachers, jobs, inquiries, schools, views, reports] = await Promise.all([
+        admin.list('teachers'), admin.list('jobs'), admin.list('inquiries'), admin.list('schools'), admin.contactViews(), admin.reports(),
       ]);
-      setData({ teachers, jobs, inquiries, schools, views });
+      setData({ teachers, jobs, inquiries, schools, views, reports });
     } catch {
       setError('Could not load the data. Check that the database is set up and you are signed in as an admin.');
     } finally {
@@ -529,7 +537,7 @@ export default function Admin() {
                   </article>
                 ))
               : list.map((item) => (
-                  <Row key={item.id} kind={tab} item={item} all={data[tab]} lastActive={lastActive(item)} onTouch={touchItem} onLink={linkItem} busy={busy} onSet={setItemStatus} onDelete={deleteItem} onNote={sendNote} views={data.views} names={names} />
+                  <Row key={item.id} kind={tab} item={item} all={data[tab]} lastActive={lastActive(item)} onTouch={touchItem} onLink={linkItem} busy={busy} onSet={setItemStatus} onDelete={deleteItem} onNote={sendNote} views={data.views} names={names} reports={data.reports} />
                 ))}
           </div>
         </Panel>

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { CheckCircle2, Loader2, ImagePlus, MapPin, Plus, Trash2, BadgeCheck, Lock } from 'lucide-react';
+import { CheckCircle2, Clock, Loader2, ImagePlus, MapPin, Plus, Trash2, BadgeCheck, Lock } from 'lucide-react';
 import { Field, Chips, Choice, inputCls, PrimaryButton, Panel, PageShell, Banner } from '../components/ui';
 import { CITIES, JOB_TYPES, isGoogleMapsLink } from '../lib/constants';
 import { resizeImage } from '../lib/image';
@@ -47,6 +47,7 @@ export default function JobForm() {
   const [busy, setBusy] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [done, setDone] = useState(false);
+  const [held, setHeld] = useState('');
   const top = useRef(null);
   const [session, setSession] = useState(undefined); // undefined = still checking
   useEffect(() => {
@@ -119,6 +120,11 @@ export default function JobForm() {
         locations: locations,
         consent: true,
       }, logo?.blob || null);
+      // The automatic check may have put it on hold: tell the school straight away.
+      try {
+        const mine = await school.myJobs(reg);
+        if (mine[0] && mine[0].status !== 'approved') setHeld(mine[0].admin_note || 'Your post is waiting for a quick check by our team. It will be visible soon.');
+      } catch { /* ignore */ }
       setDone(true);
       setTimeout(() => top.current?.scrollIntoView({ behavior: 'smooth' }), 0);
     } catch (err) {
@@ -139,10 +145,14 @@ export default function JobForm() {
         <div ref={top} />
         <Panel>
           <div className="text-center py-6 space-y-4">
-            <CheckCircle2 className="w-14 h-14 text-emerald-600 mx-auto" />
-            <h2 className="text-2xl font-black">Your job post is live!</h2>
-            <p className="text-slate-600 max-w-md mx-auto">
-              Teachers can see it now, including the contact details you entered. Applications will come to <strong>{f.contact_email}</strong>.</p>
+            {held ? <Clock className="w-14 h-14 text-amber-500 mx-auto" /> : <CheckCircle2 className="w-14 h-14 text-emerald-600 mx-auto" />}
+            <h2 className="text-2xl font-black">{held ? 'Saved, but not visible yet' : 'Your job post is live!'}</h2>
+            {held ? (
+              <p className="text-slate-700 max-w-md mx-auto whitespace-pre-line">{held}</p>
+            ) : (
+              <p className="text-slate-600 max-w-md mx-auto">
+                Teachers can see it now, including the contact details you entered. Applications will come to <strong>{f.contact_email}</strong>.</p>
+            )}
             <p className="text-sm text-slate-500">You can close this post at any time from your school page.</p>
             <a href="#/school" className="inline-block text-emerald-700 font-bold hover:underline">
               Go to my posts →

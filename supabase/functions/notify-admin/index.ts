@@ -11,7 +11,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
 const ADMIN_EMAIL = 'teachformosa@gmail.com';
-const ADMIN_URL = 'https://tutorwebsite-pied.vercel.app/#/admin';
+const ADMIN_URL = 'https://www.teachformosa.com/#/admin';
 // Resend's shared test sender. It can only deliver to the email address the Resend account
 // was created with, which is exactly what we need here.
 const FROM = 'TeachFormosa <onboarding@resend.dev>';
@@ -38,13 +38,13 @@ Deno.serve(async () => {
     .update({ notified_at: stamp })
     .is('notified_at', null)
     .eq('status', 'pending')
-    .select('id, full_name, nationality, in_taiwan, needs_arc, experience');
+    .select('id, full_name, nationality, in_taiwan, needs_arc, experience, flag_reason');
   const { data: jobs, error: e2 } = await db
     .from('jobs')
     .update({ notified_at: stamp })
     .is('notified_at', null)
     .eq('status', 'pending')
-    .select('id, school_name, title, city, job_type, arc_offered, contact_name');
+    .select('id, school_name, title, city, job_type, arc_offered, contact_name, flag_reason');
   const { data: schools, error: e3 } = await db
     .from('schools')
     .update({ notified_at: stamp })
@@ -73,9 +73,9 @@ Deno.serve(async () => {
     subjectBits.push(`${jobs.length} new job post${jobs.length > 1 ? 's' : ''}`);
     for (const j of jobs) {
       parts.push(
-        `<h3 style="margin:18px 0 6px">New job post</h3><table>` +
+        `<h3 style="margin:18px 0 6px">${j.flag_reason ? 'Job post ON HOLD' : 'New job post'}</h3><table>` +
           line('Job', j.title) + line('School', j.school_name) + line('City', j.city) +
-          line('Type', j.job_type) + line('Sponsors ARC', j.arc_offered) + line('Contact', j.contact_name) +
+          line('Type', j.job_type) + line('Sponsors ARC', j.arc_offered) + line('Contact', j.contact_name) + line('ON HOLD because', j.flag_reason) +
           `</table>`,
       );
     }
@@ -84,10 +84,10 @@ Deno.serve(async () => {
     subjectBits.push(`${teachers.length} new teacher profile${teachers.length > 1 ? 's' : ''}`);
     for (const t of teachers) {
       parts.push(
-        `<h3 style="margin:18px 0 6px">New teacher profile</h3><table>` +
+        `<h3 style="margin:18px 0 6px">${t.flag_reason ? 'Teacher profile ON HOLD' : 'New teacher profile'}</h3><table>` +
           line('Name', t.full_name) + line('Nationality', t.nationality) +
           line('In Taiwan', t.in_taiwan ? 'Yes' : 'No') + line('Needs ARC sponsorship', t.needs_arc) +
-          line('Experience (years)', t.experience) +
+          line('Experience (years)', t.experience) + line('ON HOLD because', t.flag_reason) +
           `</table>`,
       );
     }
@@ -98,7 +98,7 @@ Deno.serve(async () => {
     `<h2 style="margin:0 0 4px">TeachFormosa: waiting for your review</h2>` +
     parts.join('') +
     `<p style="margin-top:22px"><a href="${ADMIN_URL}" style="background:#ffce1f;color:#0a1745;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:bold">Open the admin page</a></p>` +
-    `<p style="color:#5b6785;font-size:12px">Nothing goes live until you approve it. Contact details and proof documents are only visible in the admin page.</p>` +
+    `<p style="color:#5b6785;font-size:12px">Held items are not public until you approve them in the admin page. Contact details and proof documents are only visible there.</p>` +
     `</div>`;
 
   const res = await fetch('https://api.resend.com/emails', {

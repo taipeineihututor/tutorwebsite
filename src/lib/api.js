@@ -1,4 +1,5 @@
 import { supabase, isDemo } from './supabase';
+import { moderationCheck, moderationNote, teacherText, jobText } from './moderation';
 
 /* -------------------------------------------------------------------------
    One small data layer used by every page.
@@ -12,7 +13,7 @@ const DEMO_ADMIN_KEY = 'thtw_demo_admin';
 const DEMO_TEACHER_KEY = 'thtw_demo_teacher'; // demo mode: the "signed-in" teacher's email
 const DEMO_SCHOOL_KEY = 'thtw_demo_school'; // demo mode: the "signed-in" school's email
 
-const emptyDb = () => ({ teachers: [], jobs: [], inquiries: [], schools: [], contact_views: [], saved: [] });
+const emptyDb = () => ({ teachers: [], jobs: [], inquiries: [], schools: [], contact_views: [], saved: [], reports: [] });
 const loadDb = () => {
   try {
     return { ...emptyDb(), ...(JSON.parse(localStorage.getItem(DEMO_KEY)) || {}) };
@@ -104,12 +105,15 @@ export async function submitTeacher(payload, photoBlob) {
   if (isDemo) {
     const db = loadDb();
     const photo_url = photoBlob ? await blobToDataUrl(photoBlob) : null;
+    const hit = moderationCheck(teacherText(payload), true);
     db.teachers.unshift({
       ...payload,
       user_id: sessionStorage.getItem(DEMO_TEACHER_KEY) || null,
       id: uid(),
       created_at: new Date().toISOString(),
-      status: 'approved',
+      status: hit ? 'pending' : 'approved',
+      flag_reason: hit ? `Automatic check: ${hit}` : null,
+      admin_note: hit ? moderationNote(hit) : null,
       last_active_at: new Date().toISOString(),
       photo_url,
     });
@@ -139,7 +143,13 @@ export async function submitJob(payload, logoBlob) {
     const logo_url = logoBlob ? await blobToDataUrl(logoBlob) : null;
     const active = db.jobs.filter((j) => j.school_id === payload.school_id && ['pending', 'approved'].includes(j.status) && !j.closed_at).length;
     if (active >= 3) throw Object.assign(new Error(CAP_MESSAGE), { code: 'P0001' });
-    db.jobs.unshift({ ...payload, logo_url, id: uid(), created_at: new Date().toISOString(), status: 'approved' });
+    const hit = moderationCheck(jobText(payload), false);
+    db.jobs.unshift({
+      ...payload, logo_url, id: uid(), created_at: new Date().toISOString(),
+      status: hit ? 'pending' : 'approved',
+      flag_reason: hit ? `Automatic check: ${hit}` : null,
+      admin_note: hit ? moderationNote(hit) : null,
+    });
     saveDb(db);
     return;
   }
@@ -254,12 +264,28 @@ export const admin = {
     if (isDemo) {
       const db = loadDb();
       const row = db[kind].find((r) => r.id === id);
-      if (row) { row.status = status; row.updated_at = new Date().toISOString(); }
+      if (row) {
+        row.status = status; row.updated_at = new Date().toISOString();
+        if (status === 'approved' && kind !== 'schools') { row.flag_reason = null; db.reports.forEach((r) => { if (r.item_id === id) r.resolved = true; }); }
+      }
       saveDb(db);
       return;
     }
-    const { error } = await supabase.from(kind).update({ status, updated_at: new Date().toISOString() }).eq('id', id);
+    // Approving something that was put on hold clears the hold and closes its reports.
+    const patch = { status, updated_at: new Date().toISOString(), ...(status === 'approved' && kind !== 'schools' ? { flag_reason: null } : {}) };
+    const { error } = await supabase.from(kind).update(patch).eq('id', id);
     if (error) throw error;
+    if (status === 'approved' && kind !== 'schools') {
+      await supabase.from('reports').update({ resolved: true }).eq('kind', kind === 'jobs' ? 'job' : 'teacher').eq('item_id', id);
+    }
+  },
+
+  // Open (unresolved) visitor reports, newest first.
+  async reports() {
+    if (isDemo) return loadDb().reports.filter((r) => !r.resolved).sort(newestFirst);
+    const { data, error } = await supabase.from('reports').select('*').eq('resolved', false).order('created_at', { ascending: false });
+    if (error) throw error;
+    return data;
   },
 
   // "Still active": marks the post as freshly checked, so it leaves the inactive list for another 30 days.
@@ -475,7 +501,13 @@ export const teacher = {
       const row = db.teachers.find((r) => r.id === profile.id);
       if (!row) return;
       const photo_url = photoBlob ? await blobToDataUrl(photoBlob) : row.photo_url;
+      const before = teacherText(row);
       Object.assign(row, payload, { photo_url, updated_at: new Date().toISOString() });
+      if (teacherText(row) !== before) {
+        const hit = moderationCheck(teacherText(row), true);
+        if (hit) { row.status = 'pending'; row.flag_reason = `Automatic check: ${hit}`; row.admin_note = moderationNote(hit); }
+        else if (row.status === 'pending' && (row.flag_reason || '').startsWith('Automatic check:')) { row.status = 'approved'; row.flag_reason = null; row.admin_note = null; }
+      }
       saveDb(db);
       return;
     }
@@ -581,3 +613,27 @@ export const saved = {
     if (error) throw error;
   },
 };
+
+
+/* ------------------------------ visitor reports ----------------------------- */
+
+export const REPORT_REASONS = ['Offensive or inappropriate', 'Fake profile or spam', 'Scam or asks for money', 'Wrong or misleading information', 'Other'];
+
+// Anyone can report a job or teacher profile. Two different reporters put it on hold until the admin has looked at it.
+export async function reportItem(kind, id, reason, detail) {
+  if (isDemo) {
+    const db = loadDb();
+    let me = localStorage.getItem('thtw_demo_reporter');
+    if (!me) { me = uid(); localStorage.setItem('thtw_demo_reporter', me); }
+    if (!db.reports.some((r) => r.kind === kind && r.item_id === id && r.reporter === me && !r.resolved)) {
+      db.reports.unshift({ id: uid(), kind, item_id: id, reason, detail: detail || null, reporter: me, resolved: false, created_at: new Date().toISOString() });
+    }
+    const n = new Set(db.reports.filter((r) => r.kind === kind && r.item_id === id && !r.resolved).map((r) => r.reporter)).size;
+    const row = (kind === 'job' ? db.jobs : db.teachers).find((r) => r.id === id);
+    if (row && n >= 2 && row.status === 'approved') { row.status = 'pending'; row.flag_reason = `Reported by ${n} visitors`; }
+    saveDb(db);
+    return;
+  }
+  const { error } = await supabase.rpc('report_item', { p_kind: kind, p_item_id: id, p_reason: reason, p_detail: detail || null });
+  if (error) throw error;
+}

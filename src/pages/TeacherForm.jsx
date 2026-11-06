@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Camera, CheckCircle2, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { Camera, CheckCircle2, ChevronLeft, ChevronRight, Clock, Loader2 } from 'lucide-react';
 import {
   Field, Chips, Choice, ComboInput, inputCls, PrimaryButton, SecondaryButton, Panel, PageShell, Banner,
 } from '../components/ui';
@@ -74,6 +74,7 @@ export default function TeacherForm({ editing = false }) {
   const [busy, setBusy] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [done, setDone] = useState(false);
+  const [held, setHeld] = useState('');
   const top = useRef(null);
 
   const set = (k, v) => setF((p) => ({ ...p, [k]: v }));
@@ -161,6 +162,11 @@ export default function TeacherForm({ editing = false }) {
       };
       if (editing) await teacher.update(me.profile, payload, photo?.blob || null);
       else await submitTeacher(payload, photo?.blob || null);
+      // The automatic check may have put it on hold: tell the teacher straight away.
+      try {
+        const s = await teacher.session();
+        if (s?.profile && s.profile.status !== 'approved') setHeld(s.profile.admin_note || 'Your profile is waiting for a quick check by our team. It will be visible soon.');
+      } catch { /* ignore */ }
       setDone(true);
       setTimeout(scrollTop, 0);
     } catch (err) {
@@ -180,10 +186,11 @@ export default function TeacherForm({ editing = false }) {
         <div ref={top} />
         <Panel>
           <div className="text-center py-6 space-y-4">
-            <CheckCircle2 className="w-14 h-14 text-emerald-600 mx-auto" />
-            <h2 className="text-2xl font-black">{editing ? 'Your changes are saved' : 'Your profile is live!'}</h2>
+            {held ? <Clock className="w-14 h-14 text-amber-500 mx-auto" /> : <CheckCircle2 className="w-14 h-14 text-emerald-600 mx-auto" />}
+            <h2 className="text-2xl font-black">{held ? 'Saved, but not visible yet' : editing ? 'Your changes are saved' : 'Your profile is live!'}</h2>
+            {held && <p className="text-slate-700 max-w-md mx-auto whitespace-pre-line">{held}</p>}
             <p className="text-slate-600 max-w-md mx-auto">
-              {editing
+              {held ? 'You can edit your text again from your profile; once the check passes, it goes live by itself.' : editing
                 ? 'The changes are visible to schools straight away.'
                 : 'Schools can find you now and contact you directly.'} Sign in at least once a month to keep your profile visible. We
               will remind you at <strong>{f.email}</strong> before it is hidden.

@@ -4,7 +4,7 @@ import { listTeachers, getTeacherContact, school } from '../lib/api';
 import {
   CITIES, SUBJECTS, EXPERIENCE, EDUCATION, VISA_STATUSES, VISA_SHORT, CERTIFICATES, DAYS, SLOTS, isVideoLink, normalizeCountry, fmtDate, fmtMonth, experienceLabel,
 } from '../lib/constants';
-import { AvailabilityMini, Banner, SaveButton } from '../components/ui';
+import { AvailabilityMini, Banner, SaveButton, ReportButton } from '../components/ui';
 import { useSaved } from '../lib/useSaved';
 
 const selectCls =
@@ -155,6 +155,7 @@ export function TeacherCard({ t, verified, sv = null }) {
           ))}
         </dl>
       )}
+      <ReportButton kind="teacher" id={t.id} />
     </article>
   );
 }
