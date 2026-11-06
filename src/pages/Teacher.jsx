@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Clock, EyeOff, Eye, Loader2, LogOut, Pencil, Trash2, XCircle, CheckCircle2, User } from 'lucide-react';
-import { ChangePassword, Banner, Field, inputCls, PageShell, Panel, PrimaryButton, SecondaryButton } from '../components/ui';
+import { ForgotPassword, ChangePassword, Banner, Field, inputCls, PageShell, Panel, PrimaryButton, SecondaryButton } from '../components/ui';
 import { teacher, displayName } from '../lib/api';
 import SavedList from '../components/SavedList';
 
@@ -66,6 +66,7 @@ function SignIn({ onDone }) {
             {busy ? <Loader2 className="w-5 h-5 animate-spin" /> : mode === 'up' ? 'Create login' : 'Log in'}
           </PrimaryButton>
         </form>
+        {mode === 'in' && <ForgotPassword initialEmail={email} />}
         <div className="mt-6 pt-5 border-t border-slate-200 text-sm text-slate-600 space-y-1">
           <p>Already sent a profile before there were logins? Create a login with the <strong>same email</strong>, then email <a className="underline font-semibold" href="mailto:teachformosa@gmail.com">teachformosa@gmail.com</a> and we will connect it to your login.</p>
         </div>

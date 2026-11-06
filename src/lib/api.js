@@ -188,6 +188,26 @@ export async function changePassword(email, current, next) {
   if (error) throw error;
 }
 
+// Sends the "reset your password" email. The link brings the person back to the site (see ResetPassword in App.jsx).
+export async function requestPasswordReset(email) {
+  if (isDemo) return;
+  const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/` });
+  if (error) throw error;
+}
+
+// Used after following the reset link (the link has signed the person in for this one purpose).
+export async function setNewPassword(next) {
+  if (isDemo) return;
+  const { error } = await supabase.auth.updateUser({ password: next });
+  if (error) throw error;
+}
+
+export function onPasswordRecovery(cb) {
+  if (isDemo) return () => {};
+  const { data } = supabase.auth.onAuthStateChange((event) => { if (event === 'PASSWORD_RECOVERY') cb(); });
+  return () => data.subscription.unsubscribe();
+}
+
 /* -------------------------------- admin --------------------------------- */
 
 export const admin = {

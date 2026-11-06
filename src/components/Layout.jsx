@@ -100,9 +100,9 @@ export default function Layout({ route, children }) {
 
       <main className="flex-1">{children}</main>
 
-      <footer className="py-8 border-t border-white/15 text-center text-xs text-slate-300">
+      <footer className="py-10 px-4 border-t border-white/15 text-center text-sm sm:text-base text-slate-200">
         <p>© 2026 TeachFormosa. Free to post. Every school and institution is verified before it can post or see teachers' contact details.</p>
-        <p className="mt-2 space-x-3">
+        <p className="mt-2 space-x-4">
           <a href="#/legal" className="text-slate-300 hover:text-white underline">Terms &amp; Privacy</a>
           <a href="mailto:teachformosa@gmail.com" className="text-slate-300 hover:text-white underline">teachformosa@gmail.com</a>
           <a href="#/admin" className="text-slate-400 hover:text-white">Admin</a>

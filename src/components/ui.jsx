@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Check, AlertCircle, Heart, Flag } from 'lucide-react';
-import { reportItem, REPORT_REASONS, changePassword } from '../lib/api';
+import { reportItem, REPORT_REASONS, changePassword, requestPasswordReset, setNewPassword } from '../lib/api';
 import { KeyRound } from 'lucide-react';
 
 export const inputCls =
@@ -333,5 +333,86 @@ export function ChangePassword({ email, dark = false }) {
         </form>
       )}
     </div>
+  );
+}
+
+// "Forgot password?" under a sign-in form: sends a reset link by email.
+export function ForgotPassword({ initialEmail = '', dark = false }) {
+  const [open, setOpen] = useState(false);
+  const [email, setEmail] = useState(initialEmail);
+  const [state, setState] = useState('idle'); // idle | busy | done
+  const [msg, setMsg] = useState('');
+  const send = async (e) => {
+    e.preventDefault();
+    setMsg('');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return setMsg('Please enter a valid email address.');
+    setState('busy');
+    try {
+      await requestPasswordReset(email.trim());
+      setState('done');
+    } catch (err) {
+      setMsg(/rate|too many|seconds/i.test(String(err?.message)) ? 'Too many requests. Please wait a few minutes and try again.' : 'Sorry, the email could not be sent. Please try again later.');
+      setState('idle');
+    }
+  };
+  const link = dark ? 'text-slate-300 hover:text-white' : 'text-slate-600 hover:text-slate-900';
+  if (!open) return <button type="button" onClick={() => setOpen(true)} className={`mt-4 text-sm font-semibold underline ${link}`}>Forgot your password?</button>;
+  return (
+    <div className="mt-4 bg-white text-slate-900 rounded-xl border border-slate-200 p-4 max-w-md">
+      {state === 'done' ? (
+        <p className="text-sm">If an account exists for <strong>{email.trim()}</strong>, we have sent a link to choose a new password. Check your spam folder too.</p>
+      ) : (
+        <form onSubmit={send} className="space-y-3">
+          <p className="font-bold">Reset your password</p>
+          <Field label="Your login email" htmlFor="fp-email"><input id="fp-email" type="email" className={inputCls} value={email} onChange={(e) => setEmail(e.target.value)} /></Field>
+          {msg && <p role="alert" className="flex items-start gap-2 text-sm text-red-700"><AlertCircle className="w-4 h-4 mt-0.5 shrink-0" /> {msg}</p>}
+          <div className="flex gap-2">
+            <PrimaryButton type="submit" disabled={state === 'busy'}>{state === 'busy' ? 'Sending…' : 'Send reset link'}</PrimaryButton>
+            <SecondaryButton type="button" onClick={() => setOpen(false)}>Cancel</SecondaryButton>
+          </div>
+        </form>
+      )}
+    </div>
+  );
+}
+
+// Shown after someone follows the link in the reset email.
+export function ResetPassword({ onDone }) {
+  const [nw, setNw] = useState('');
+  const [again, setAgain] = useState('');
+  const [state, setState] = useState('idle');
+  const [msg, setMsg] = useState('');
+  const save = async (e) => {
+    e.preventDefault();
+    setMsg('');
+    if (nw.length < 8) return setMsg('The new password must be at least 8 characters.');
+    if (nw !== again) return setMsg('The two passwords do not match.');
+    setState('busy');
+    try {
+      await setNewPassword(nw);
+      setState('done');
+    } catch (err) {
+      setMsg(err?.message || 'Could not change the password. Please request a new link.');
+      setState('idle');
+    }
+  };
+  return (
+    <PageShell title="Choose a new password">
+      <Panel>
+        {state === 'done' ? (
+          <div className="space-y-3">
+            <p className="flex items-center gap-2 font-semibold text-emerald-700"><Check className="w-4 h-4" /> Your password has been changed. You are now signed in.</p>
+            <PrimaryButton type="button" onClick={onDone}>Continue</PrimaryButton>
+          </div>
+        ) : (
+          <form onSubmit={save} className="space-y-4 max-w-md">
+            <Field label="New password" hint="At least 8 characters" htmlFor="rp-new"><input id="rp-new" type="password" autoComplete="new-password" className={inputCls} value={nw} onChange={(e) => setNw(e.target.value)} /></Field>
+            <Field label="New password again" htmlFor="rp-again"><input id="rp-again" type="password" autoComplete="new-password" className={inputCls} value={again} onChange={(e) => setAgain(e.target.value)} /></Field>
+            {msg && <p role="alert" className="flex items-start gap-2 text-sm text-red-700"><AlertCircle className="w-4 h-4 mt-0.5 shrink-0" /> {msg}</p>}
+            <PrimaryButton type="submit" disabled={state === 'busy'}>{state === 'busy' ? 'Saving…' : 'Save new password'}</PrimaryButton>
+          </form>
+        )}
+      </Panel>
+    </PageShell>
   );
 }

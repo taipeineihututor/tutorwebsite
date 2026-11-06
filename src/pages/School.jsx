@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import SavedList from '../components/SavedList';
 import { BadgeCheck, CheckCircle2, Clock, FileUp, Loader2, LogOut, ShieldCheck, XCircle } from 'lucide-react';
-import { ChangePassword, Banner, Field, inputCls, PageShell, Panel, PrimaryButton, SecondaryButton } from '../components/ui';
+import { ForgotPassword, ChangePassword, Banner, Field, inputCls, PageShell, Panel, PrimaryButton, SecondaryButton } from '../components/ui';
 import { CITIES, SCHOOL_TYPES } from '../lib/constants';
 import { MAX_ACTIVE_POSTS, school } from '../lib/api';
 
@@ -83,6 +83,7 @@ function SignIn({ onDone }) {
             {busy ? <Loader2 className="w-5 h-5 animate-spin" /> : mode === 'up' ? 'Create login' : 'Sign in'}
           </PrimaryButton>
         </form>
+        {mode === 'in' && <ForgotPassword initialEmail={email} />}
       </Panel>
     </PageShell>
   );

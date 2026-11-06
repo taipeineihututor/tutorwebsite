@@ -9,14 +9,23 @@ import Legal from './pages/Legal';
 import School from './pages/School';
 import Teacher from './pages/Teacher';
 import { useRoute } from './lib/router';
-import { teacher } from './lib/api';
+import { teacher, onPasswordRecovery } from './lib/api';
+import { ResetPassword } from './components/ui';
 
 export default function App() {
   const route = useRoute();
   // A signed-in teacher counts as active whenever they open the site.
   React.useEffect(() => { teacher.session().catch(() => {}); }, []);
 
+  // Someone who followed the link in a "reset password" email.
+  const [recovering, setRecovering] = React.useState(false);
+  React.useEffect(() => onPasswordRecovery(() => setRecovering(true)), []);
+
   let page;
+  if (recovering) {
+    page = <ResetPassword onDone={() => { setRecovering(false); window.location.hash = '#/teacher'; window.location.reload(); }} />;
+    return <Layout route={route}>{page}</Layout>;
+  }
   switch (route) {
     case '/teachers':
       page = <Teachers />;

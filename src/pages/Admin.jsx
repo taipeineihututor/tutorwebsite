@@ -3,7 +3,7 @@ import { Check, X, Trash2, ChevronDown, Loader2, LogOut, Mail, MessageSquare, Us
 import { admin } from '../lib/api';
 import { geocodeBest, sleep } from '../lib/geocode';
 import { isDemo } from '../lib/supabase';
-import { ChangePassword, Banner, Field, inputCls, PrimaryButton, SecondaryButton, Panel } from '../components/ui';
+import { ForgotPassword, ChangePassword, Banner, Field, inputCls, PrimaryButton, SecondaryButton, Panel } from '../components/ui';
 import { DAYS, SLOTS, VISA_SHORT, ARC_NEEDS, experienceLabel, fmtDate } from '../lib/constants';
 
 const TABS = [
@@ -341,6 +341,7 @@ function Login({ onDone, notAdminEmail }) {
               {busy ? <Loader2 className="w-5 h-5 animate-spin" /> : isDemo ? 'Enter admin (preview)' : 'Sign in'}
             </PrimaryButton>
           </form>
+          {!isDemo && <ForgotPassword initialEmail={email} dark={false} />}
         </Panel>
       </div>
     </section>
