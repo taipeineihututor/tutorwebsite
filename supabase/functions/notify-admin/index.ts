@@ -14,7 +14,7 @@ const ADMIN_EMAIL = 'teachformosa@gmail.com';
 const ADMIN_URL = 'https://www.teachformosa.com/#/admin';
 // Resend's shared test sender. It can only deliver to the email address the Resend account
 // was created with, which is exactly what we need here.
-const FROM = 'TeachFormosa <onboarding@resend.dev>';
+const FROM = 'TeachFormosa <alerts@teachformosa.com>';
 
 const esc = (v: unknown) =>
   String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
