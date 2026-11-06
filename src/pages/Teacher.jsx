@@ -67,9 +67,6 @@ function SignIn({ onDone }) {
           </PrimaryButton>
         </form>
         {mode === 'in' && <ForgotPassword initialEmail={email} />}
-        <div className="mt-6 pt-5 border-t border-slate-200 text-sm text-slate-600 space-y-1">
-          <p>Already sent a profile before there were logins? Create a login with the <strong>same email</strong>, then email <a className="underline font-semibold" href="mailto:teachformosa@gmail.com">teachformosa@gmail.com</a> and we will connect it to your login.</p>
-        </div>
       </Panel>
     </PageShell>
   );
