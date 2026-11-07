@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Menu, X, Plus, User } from 'lucide-react';
+import { Menu, X, Building2, User } from 'lucide-react';
 import { isDemo } from '../lib/supabase';
 
 // "Formosa" = the beautiful island. The mark is a simplified outline of Taiwan on a yellow tile.
@@ -65,8 +65,8 @@ export default function Layout({ route, children }) {
               href="#/school"
               className="flex items-center space-x-2 border border-white/30 hover:border-emerald-400 text-white px-3 lg:px-5 py-3 rounded-xl text-sm lg:text-base font-bold transition"
             >
-              <Plus className="w-4 h-4 text-emerald-400" />
-              <span>Schools: post a job</span>
+              <Building2 className="w-4 h-4 text-emerald-400" />
+              <span>I'm a School</span>
             </a>
             <a
               href="#/teacher"
