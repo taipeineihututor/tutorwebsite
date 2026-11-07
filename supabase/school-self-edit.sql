@@ -1,0 +1,3 @@
+-- Approved institutions can edit their contact details without losing verification (already applied to the live project).
+-- Adds: update_my_school_details() RPC, and a flag in protect_school_fields() that only that RPC sets.
+-- See the live definitions in the Supabase SQL editor (functions protect_school_fields, update_my_school_details).

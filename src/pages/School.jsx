@@ -259,6 +259,72 @@ const jobState = (j) =>
     : { label: 'Rejected', cls: 'bg-red-100 text-red-800' };
 const isActive = (j) => !j.closed_at && ['pending', 'approved'].includes(j.status);
 
+function DetailsCard({ reg, onChange }) {
+  const [open, setOpen] = useState(false);
+  const [f, setF] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+  const [saved, setSaved] = useState(false);
+  const set = (k, v) => setF((p) => ({ ...p, [k]: v }));
+  const start = () => {
+    setF({
+      contact_name: reg.contact_name || '', contact_title: reg.contact_title || '', phone: reg.phone || '',
+      contact_email: reg.contact_email || '', website: reg.website || '', address: reg.address || '', city: reg.city || '',
+    });
+    setErr(''); setSaved(false); setOpen(true);
+  };
+  const save = async (e) => {
+    e.preventDefault();
+    setErr('');
+    if (f.contact_name.trim().length < 2) return setErr('Please enter a contact person.');
+    if (f.phone.trim().length < 6) return setErr('Please enter a phone number.');
+    if (!emailOk(f.contact_email.trim())) return setErr('Please enter a valid contact email address.');
+    if (f.website.trim() && !linkOk(f.website.trim())) return setErr('The website should start with https://');
+    setBusy(true);
+    try {
+      await school.updateDetails({ ...f, contact_name: f.contact_name.trim(), phone: f.phone.trim(), contact_email: f.contact_email.trim(), website: f.website.trim() });
+      setOpen(false); setSaved(true);
+      await onChange?.();
+    } catch {
+      setErr('Sorry, the details could not be saved. Please try again.');
+    } finally { setBusy(false); }
+  };
+  const rows = [
+    ['Institution', reg.institution_name], ['Type', reg.institution_type], ['Tax ID', reg.tax_id], ['City', reg.city], ['Address', reg.address],
+    ['Website', reg.website], ['Contact person', [reg.contact_name, reg.contact_title].filter(Boolean).join(', ')], ['Phone', reg.phone], ['Contact email', reg.contact_email],
+  ];
+  return (
+    <div className="border border-slate-200 rounded-2xl p-4">
+      <div className="flex items-center justify-between gap-3 mb-2">
+        <h2 className="text-lg font-black text-slate-900">Your details</h2>
+        {!open && <SecondaryButton type="button" onClick={start} className="!py-2 !text-sm">Edit contact details</SecondaryButton>}
+      </div>
+      {saved && !open && <Banner tone="ok">Saved.</Banner>}
+      {!open ? (
+        <dl className="grid sm:grid-cols-[10rem_1fr] gap-x-4 gap-y-1 text-sm mt-2">
+          {rows.filter(([, v]) => v).map(([k, v]) => (<React.Fragment key={k}><dt className="font-semibold text-slate-500">{k}</dt><dd className="text-slate-900 break-words">{v}</dd></React.Fragment>))}
+        </dl>
+      ) : (
+        <form onSubmit={save} className="space-y-4 mt-3 max-w-xl">
+          <Field label="Contact person" required htmlFor="d_cn"><input id="d_cn" className={inputCls} maxLength={100} value={f.contact_name} onChange={(e) => set('contact_name', e.target.value)} /></Field>
+          <Field label="Job title" htmlFor="d_ct"><input id="d_ct" className={inputCls} maxLength={100} value={f.contact_title} onChange={(e) => set('contact_title', e.target.value)} /></Field>
+          <Field label="Phone number" required htmlFor="d_ph" hint="Seen by our admin only."><input id="d_ph" type="tel" className={inputCls} maxLength={60} value={f.phone} onChange={(e) => set('phone', e.target.value)} /></Field>
+          <Field label="Contact email" required htmlFor="d_em" hint="Where we write to you. Your sign-in email stays the same."><input id="d_em" type="email" className={inputCls} maxLength={200} value={f.contact_email} onChange={(e) => set('contact_email', e.target.value)} /></Field>
+          <Field label="Website" htmlFor="d_web"><input id="d_web" className={inputCls} maxLength={300} placeholder="https://" value={f.website} onChange={(e) => set('website', e.target.value)} /></Field>
+          <Field label="City" htmlFor="d_city"><select id="d_city" className={inputCls} value={f.city} onChange={(e) => set('city', e.target.value)}>{CITIES.map((o) => <option key={o}>{o}</option>)}</select></Field>
+          <Field label="Address" htmlFor="d_addr"><input id="d_addr" className={inputCls} maxLength={250} value={f.address} onChange={(e) => set('address', e.target.value)} /></Field>
+          {err && <Banner tone="error">{err}</Banner>}
+          <div className="flex gap-2">
+            <PrimaryButton type="submit" disabled={busy}>{busy ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Save'}</PrimaryButton>
+            <SecondaryButton type="button" onClick={() => setOpen(false)}>Cancel</SecondaryButton>
+          </div>
+          <p className="text-xs text-slate-500">The institution name, type and tax ID are what we verified. To change them, email teachformosa@gmail.com.</p>
+        </form>
+      )}
+    </div>
+  );
+}
+
 function Dashboard({ session, onChange }) {
   const reg = session.registration;
   const [jobs, setJobs] = useState(null);
@@ -293,6 +359,8 @@ function Dashboard({ session, onChange }) {
       </div>
 
       <SavedList kind="teacher" />
+
+      <DetailsCard reg={reg} onChange={onChange} />
 
       <div>
         <h2 className="text-lg font-black text-slate-900 mb-1">My posts</h2>
@@ -343,7 +411,7 @@ export default function School() {
   if (!reg || editing) {
     body = <RegistrationForm session={session} existing={reg} onDone={refresh} />;
   } else if (reg.status === 'approved') {
-    body = <Dashboard session={session} />;
+    body = <Dashboard session={session} onChange={refresh} />;
   } else if (reg.status === 'pending') {
     body = (
       <div className="text-center py-6 space-y-3">

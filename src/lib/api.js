@@ -447,6 +447,24 @@ export const school = {
     if (error) throw error;
   },
 
+  // Approved institutions can change their contact details without being re-verified.
+  async updateDetails(d) {
+    if (isDemo) {
+      const db = loadDb();
+      const email = sessionStorage.getItem(DEMO_SCHOOL_KEY);
+      const row = db.schools.find((r) => r.user_id === email);
+      if (row) Object.assign(row, { contact_name: d.contact_name, contact_title: d.contact_title || null, phone: d.phone, contact_email: d.contact_email,
+        website: d.website || null, address: d.address || null, city: d.city || row.city });
+      saveDb(db);
+      return;
+    }
+    const { error } = await supabase.rpc('update_my_school_details', {
+      p_contact_name: d.contact_name, p_contact_title: d.contact_title, p_phone: d.phone, p_contact_email: d.contact_email,
+      p_website: d.website, p_address: d.address, p_city: d.city,
+    });
+    if (error) throw error;
+  },
+
   async myJobs(registration) {
     if (!registration) return [];
     if (isDemo) return loadDb().jobs.filter((j) => j.school_id === registration.id).sort(newestFirst);
