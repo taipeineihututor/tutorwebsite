@@ -284,3 +284,5 @@ grant select on public.public_teachers to anon, authenticated;
 -- (words, contact details in teacher text) and visitor reports (2 different reporters put an item on hold).
 
 -- UPGRADE NOTE (mandatory pay): run supabase/pay.sql. New jobs need an hourly and/or monthly pay range (part-time: hourly, full-time: monthly).
+
+-- UPGRADE NOTE (school decision emails): run supabase/school-decision.sql and deploy functions/notify-school.
