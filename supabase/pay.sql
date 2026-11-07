@@ -12,8 +12,9 @@ declare ok_h boolean; ok_m boolean; any_h boolean; any_m boolean;
 begin
   any_h := new.pay_hourly_min is not null or new.pay_hourly_max is not null;
   any_m := new.pay_monthly_min is not null or new.pay_monthly_max is not null;
-  ok_h := new.pay_hourly_min  is not null and new.pay_hourly_max  is not null and new.pay_hourly_max  >= new.pay_hourly_min;
-  ok_m := new.pay_monthly_min is not null and new.pay_monthly_max is not null and new.pay_monthly_max >= new.pay_monthly_min;
+  -- A lowest figure is required; the highest may be left empty ("and up").
+  ok_h := new.pay_hourly_min  is not null and (new.pay_hourly_max  is null or new.pay_hourly_max  >= new.pay_hourly_min);
+  ok_m := new.pay_monthly_min is not null and (new.pay_monthly_max is null or new.pay_monthly_max >= new.pay_monthly_min);
   if (any_h and not ok_h) or (any_m and not ok_m) or not (ok_h or ok_m) then
     raise exception 'Please give the pay as a range (hourly, monthly, or both).' using errcode = 'P0001';
   end if;

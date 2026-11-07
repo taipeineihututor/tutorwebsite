@@ -18,14 +18,15 @@ const nt = (n) => `NT$${n.toLocaleString('en-US')}`;
 export function payCheck(f) {
   const hMin = num(f.hourly_min), hMax = num(f.hourly_max), mMin = num(f.monthly_min), mMax = num(f.monthly_max);
   const anyH = !!(f.hourly_min || f.hourly_max), anyM = !!(f.monthly_min || f.monthly_max);
-  const okH = hMin != null && hMax != null && hMax >= hMin;
-  const okM = mMin != null && mMax != null && mMax >= mMin;
-  if ((anyH && !okH) || (anyM && !okM)) return { error: 'Please give both a lowest and a highest figure (the highest can be the same), and make sure the highest is not lower.' };
-  if (f.job_type === 'Part-Time' && !okH) return { error: 'Part-time jobs need an hourly pay range, for example NT$600 to NT$1,000 per hour.' };
-  if (f.job_type === 'Full-Time' && !okM) return { error: 'Full-time jobs need a monthly pay range, for example NT$55,000 to NT$75,000 per month.' };
+  // A lowest figure is required; the highest can be left empty, which means "and up".
+  const okH = hMin != null && (hMax == null || hMax >= hMin);
+  const okM = mMin != null && (mMax == null || mMax >= mMin);
+  if ((anyH && !okH) || (anyM && !okM)) return { error: 'Please enter the lowest figure. The highest is optional (leave it empty for "and up"), but it cannot be lower than the lowest.' };
+  if (f.job_type === 'Part-Time' && !okH) return { error: 'Part-time jobs need an hourly pay, for example NT$600 to NT$1,000 per hour, or NT$600 and up.' };
+  if (f.job_type === 'Full-Time' && !okM) return { error: 'Full-time jobs need a monthly pay, for example NT$55,000 to NT$75,000 per month, or NT$60,000 and up.' };
   if (!okH && !okM) return { error: 'Please enter the pay: an hourly range, a monthly range, or both.' };
   const bits = [];
-  const range = (a, b) => (a === b ? nt(a) : `${nt(a)}–${nt(b).replace('NT$', '')}`);
+  const range = (a, b) => (b == null ? `${nt(a)} and up` : a === b ? nt(a) : `${nt(a)}–${nt(b).replace('NT$', '')}`);
   if (okH) bits.push(`${range(hMin, hMax)} / hour`);
   if (okM) bits.push(`${range(mMin, mMax)} / month`);
   return { text: bits.join(' · '), hMin: okH ? hMin : null, hMax: okH ? hMax : null, mMin: okM ? mMin : null, mMax: okM ? mMax : null };
@@ -319,14 +320,14 @@ export default function JobForm() {
           </Field>
 
           <Field label="Pay (required)" required error={errors.salary} group
-            hint="Show a range, for example NT$600 to NT$1,000 per hour for part-time, or NT$55,000 to NT$75,000 per month for full-time. Part-time needs hourly, full-time needs monthly, and you can give both.">
+            hint="Give the lowest pay, and the highest if you want to show a range. Leave the second box empty to show “and up” (for example NT$60,000 and up). Part-time needs hourly, full-time needs monthly, and you can give both.">
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
                 <p className="text-sm font-semibold text-slate-700 mb-1.5">Per hour (NT$){f.job_type === 'Part-Time' ? ' *' : ''}</p>
                 <div className="flex items-center gap-2">
                   <input id="hourly_min" inputMode="numeric" aria-label="Hourly pay from" className={inputCls} placeholder="from 600" value={f.hourly_min} onChange={(e) => set('hourly_min', e.target.value)} />
                   <span className="text-slate-500">to</span>
-                  <input id="hourly_max" inputMode="numeric" aria-label="Hourly pay up to" className={inputCls} placeholder="up to 1,000" value={f.hourly_max} onChange={(e) => set('hourly_max', e.target.value)} />
+                  <input id="hourly_max" inputMode="numeric" aria-label="Hourly pay up to" className={inputCls} placeholder="up to (optional)" value={f.hourly_max} onChange={(e) => set('hourly_max', e.target.value)} />
                 </div>
               </div>
               <div>
@@ -334,7 +335,7 @@ export default function JobForm() {
                 <div className="flex items-center gap-2">
                   <input id="monthly_min" inputMode="numeric" aria-label="Monthly pay from" className={inputCls} placeholder="from 55,000" value={f.monthly_min} onChange={(e) => set('monthly_min', e.target.value)} />
                   <span className="text-slate-500">to</span>
-                  <input id="monthly_max" inputMode="numeric" aria-label="Monthly pay up to" className={inputCls} placeholder="up to 75,000" value={f.monthly_max} onChange={(e) => set('monthly_max', e.target.value)} />
+                  <input id="monthly_max" inputMode="numeric" aria-label="Monthly pay up to" className={inputCls} placeholder="up to (optional)" value={f.monthly_max} onChange={(e) => set('monthly_max', e.target.value)} />
                 </div>
               </div>
             </div>
