@@ -59,7 +59,7 @@ function validate(f) {
   return e;
 }
 
-export default function JobForm() {
+export default function JobForm({ editId = null }) {
   const [f, setF] = useState({ ...initial, locations: [blankLoc()] });
   const [logo, setLogo] = useState(null);
   const [logoError, setLogoError] = useState('');
@@ -68,6 +68,8 @@ export default function JobForm() {
   const [submitError, setSubmitError] = useState('');
   const [done, setDone] = useState(false);
   const [held, setHeld] = useState('');
+  const [loadError, setLoadError] = useState('');
+  const [origLocs, setOrigLocs] = useState([]);
   const top = useRef(null);
   const [session, setSession] = useState(undefined); // undefined = still checking
   useEffect(() => {
@@ -76,6 +78,21 @@ export default function JobForm() {
       const r = s?.registration;
       if (r?.status === 'approved') {
         setF((p) => ({ ...p, school_name: r.institution_name, school_type: r.institution_type || 'Other', contact_name: r.contact_name || '', contact_email: s.email || '' }));
+        if (editId) {
+          school.getJob(editId).then((j) => {
+            if (!j || j.closed_at) { setLoadError('This post could not be found or is closed.'); return; }
+            setOrigLocs(j.locations || []);
+            setF((p) => ({
+              ...p, school_name: j.school_name, school_type: j.school_type || p.school_type,
+              contact_name: j.contact_name || '', contact_email: j.contact_email || '', apply_link: j.apply_link || '',
+              title: j.title || '', city: j.city || '', district: j.district || '', job_type: j.job_type || '', onsite_only: !!j.onsite_only,
+              hourly_min: j.pay_hourly_min ?? '', hourly_max: j.pay_hourly_max ?? '', monthly_min: j.pay_monthly_min ?? '', monthly_max: j.pay_monthly_max ?? '',
+              arc_offered: j.arc_offered || '', start_asap: !!j.start_asap, start_date: j.start_date || '', schedule: j.schedule || '',
+              description: j.description || '', requirements: j.requirements || '', consent: true,
+              locations: (j.locations || []).length ? j.locations.map((l) => ({ label: l.label || '', address: l.address || '', maps_url: l.maps_url || '' })) : [blankLoc()],
+            }));
+          }).catch(() => setLoadError('This post could not be loaded.'));
+        }
       }
     }).catch(() => setSession(null));
   }, []);
@@ -115,11 +132,12 @@ export default function JobForm() {
       // Place each address on the map (best effort; never blocks sending).
       const locations = [];
       for (const l of f.locations.filter((x) => x.address.trim()).slice(0, MAX_LOCATIONS)) {
-        const pos = await geocodeBest(l.address);
+        const same = origLocs.find((o) => o.address === l.address.trim() && Number.isFinite(o.lat));
+        const pos = same ? { lat: same.lat, lng: same.lng } : await geocodeBest(l.address);
         locations.push({ label: l.label.trim(), address: l.address.trim(), maps_url: l.maps_url.trim(), ...(pos || {}) });
         if (locations.length < f.locations.length) await new Promise((r) => setTimeout(r, 1100)); // be polite: 1 request/second
       }
-      await submitJob({
+      const payload = {
         school_id: reg.id,
         school_name: f.school_name.trim(),
         school_type: f.school_type,
@@ -142,12 +160,25 @@ export default function JobForm() {
         requirements: f.requirements.trim() || null,
         locations: locations,
         consent: true,
-      }, logo?.blob || null);
-      // The automatic check may have put it on hold: tell the school straight away.
-      try {
-        const mine = await school.myJobs(reg);
-        if (mine[0] && mine[0].status !== 'approved') setHeld(mine[0].admin_note || 'Your post is waiting for a quick check by our team. It will be visible soon.');
-      } catch { /* ignore */ }
+      };
+      if (editId) {
+        const { school_id, school_name, school_type, consent, ...rest } = payload; // eslint-disable-line no-unused-vars
+        const status = await school.updateJob(editId, rest, logo?.blob || null);
+        if (status !== 'approved') {
+          try {
+            const mine = await school.myJobs(reg);
+            const me = mine.find((x) => x.id === editId);
+            setHeld((me && me.admin_note) || 'Your changes are saved. The post is waiting for a quick check by our team and will be visible soon.');
+          } catch { setHeld('Your changes are saved. The post is waiting for a quick check by our team and will be visible soon.'); }
+        }
+      } else {
+        await submitJob(payload, logo?.blob || null);
+        // The automatic check may have put it on hold: tell the school straight away.
+        try {
+          const mine = await school.myJobs(reg);
+          if (mine[0] && mine[0].status !== 'approved') setHeld(mine[0].admin_note || 'Your post is waiting for a quick check by our team. It will be visible soon.');
+        } catch { /* ignore */ }
+      }
       setDone(true);
       setTimeout(() => top.current?.scrollIntoView({ behavior: 'smooth' }), 0);
     } catch (err) {
@@ -169,12 +200,12 @@ export default function JobForm() {
         <Panel>
           <div className="text-center py-6 space-y-4">
             {held ? <Clock className="w-14 h-14 text-amber-500 mx-auto" /> : <CheckCircle2 className="w-14 h-14 text-emerald-600 mx-auto" />}
-            <h2 className="text-2xl font-black">{held ? 'Saved, but not visible yet' : 'Your job post is live!'}</h2>
+            <h2 className="text-2xl font-black">{held ? 'Saved, but not visible yet' : editId ? 'Your changes are saved!' : 'Your job post is live!'}</h2>
             {held ? (
               <p className="text-slate-700 max-w-md mx-auto whitespace-pre-line">{held}</p>
             ) : (
               <p className="text-slate-600 max-w-md mx-auto">
-                Teachers can see it now, including the contact details you entered. Applications will come to <strong>{f.contact_email}</strong>.</p>
+                {editId ? 'The updated post is live now.' : 'Teachers can see it now, including the contact details you entered.'} Applications will come to <strong>{f.contact_email}</strong>.</p>
             )}
             <p className="text-sm text-slate-500">You can close this post at any time from your school page.</p>
             <a href="#/school" className="inline-block text-emerald-700 font-bold hover:underline">
@@ -212,9 +243,10 @@ export default function JobForm() {
   }
 
   return (
-    <PageShell title="Post a teaching job" subtitle="Takes about 3 minutes. Your post goes live as soon as you send it. Each institution can have up to 3 active posts at a time.">
+    <PageShell title={editId ? 'Edit your job post' : 'Post a teaching job'} subtitle={editId ? 'Change anything below and save. The post stays live (a quick automatic check runs again).' : 'Takes about 3 minutes. Your post goes live as soon as you send it. Each institution can have up to 3 active posts at a time.'}>
       <div ref={top} />
       <Panel>
+        {loadError && <div className="mb-4"><Banner tone="error">{loadError} <a href="#/school" className="underline font-bold">Back to my posts</a></Banner></div>}
         <div className="space-y-6">
           <h2 className="text-lg font-black text-slate-900">About your school</h2>
 
@@ -410,7 +442,7 @@ export default function JobForm() {
 
           <div className="flex justify-end">
             <PrimaryButton onClick={submit} disabled={busy}>
-              {busy ? <><Loader2 className="w-5 h-5 animate-spin" /> Sending…</> : 'Publish job post'}
+              {busy ? <><Loader2 className="w-5 h-5 animate-spin" /> {editId ? 'Saving…' : 'Sending…'}</> : editId ? 'Save changes' : 'Publish job post'}
             </PrimaryButton>
           </div>
         </div>

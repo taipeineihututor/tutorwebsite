@@ -1,0 +1,3 @@
+-- Schools can edit their own posts (already applied to the live project).
+-- Adds: jobs.onsite_only (and public_jobs.onsite_only), update_my_job(uuid, jsonb) RPC, the pay trigger on UPDATE, and an admin alert
+-- when an edit puts a post on hold. See the live definitions in the Supabase SQL editor.

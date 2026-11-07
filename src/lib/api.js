@@ -495,6 +495,41 @@ export const school = {
     return data;
   },
 
+  // The full row of one of the school's own posts (for the edit form).
+  async getJob(id) {
+    if (isDemo) return loadDb().jobs.find((j) => j.id === id) || null;
+    const { data, error } = await supabase.from('jobs').select('*').eq('id', id).maybeSingle();
+    if (error) throw error;
+    return data;
+  },
+
+  // Saves changes to a post. The automatic check runs again: a held post is released by a clean edit.
+  async updateJob(id, payload, logoBlob) {
+    if (isDemo) {
+      const db = loadDb();
+      const j = db.jobs.find((r) => r.id === id);
+      if (!j) throw Object.assign(new Error('Post not found, or it cannot be edited.'), { code: 'P0001' });
+      const hit = moderationCheck(jobText(payload), false);
+      const logo_url = logoBlob ? await blobToDataUrl(logoBlob) : j.logo_url;
+      Object.assign(j, payload, { logo_url, updated_at: new Date().toISOString() });
+      if (hit) Object.assign(j, { status: 'pending', flag_reason: `Automatic check: ${hit}`, admin_note: moderationNote(hit) });
+      else if (j.status === 'rejected') j.status = 'pending';
+      else if (j.status === 'pending' && String(j.flag_reason || '').startsWith('Automatic check')) Object.assign(j, { status: 'approved', flag_reason: null, admin_note: null });
+      saveDb(db);
+      return j.status;
+    }
+    let logo_url = '';
+    if (logoBlob) {
+      const path = `logos/${uid()}.jpg`;
+      const { error: upErr } = await supabase.storage.from('photos').upload(path, logoBlob, { contentType: 'image/jpeg', cacheControl: '31536000' });
+      if (upErr) throw upErr;
+      logo_url = supabase.storage.from('photos').getPublicUrl(path).data.publicUrl;
+    }
+    const { data, error } = await supabase.rpc('update_my_job', { p_job_id: id, p_data: { ...payload, logo_url } });
+    if (error) throw error;
+    return data;
+  },
+
   async closeJob(id) {
     if (isDemo) {
       const db = loadDb();

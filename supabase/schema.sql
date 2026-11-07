@@ -290,3 +290,5 @@ grant select on public.public_teachers to anon, authenticated;
 -- UPGRADE NOTE (school self-edit): see supabase/school-self-edit.sql.
 
 -- UPGRADE NOTE (admin logins tab): see supabase/admin-logins.sql.
+
+-- UPGRADE NOTE (on-site only + job editing): see supabase/job-edit.sql.

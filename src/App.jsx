@@ -26,6 +26,9 @@ export default function App() {
     page = <ResetPassword onDone={() => { setRecovering(false); window.location.hash = '#/teacher'; window.location.reload(); }} />;
     return <Layout route={route}>{page}</Layout>;
   }
+  if (route.startsWith('/edit-job/')) {
+    return <Layout route={route}><JobForm key={route} editId={route.slice('/edit-job/'.length)} /></Layout>;
+  }
   switch (route) {
     case '/teachers':
       page = <Teachers />;

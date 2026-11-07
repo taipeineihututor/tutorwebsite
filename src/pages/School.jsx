@@ -378,7 +378,10 @@ function Dashboard({ session, onChange }) {
                   <span className={`inline-block mt-1 px-2.5 py-0.5 rounded-full text-xs font-bold ${st.cls}`}>{st.label}</span>
                   {(j.status === 'rejected' || j.status === 'pending') && j.admin_note && <p className="text-sm text-slate-600 mt-1 whitespace-pre-line">{j.admin_note}</p>}
                 </div>
-                {isActive(j) && <SecondaryButton disabled={busy === j.id} onClick={() => close(j)} className="!py-2 !text-sm">Close this post</SecondaryButton>}
+                <div className="flex flex-wrap gap-2">
+                  {!j.closed_at && ['pending', 'approved', 'rejected'].includes(j.status) && <a href={`#/edit-job/${j.id}`} className="inline-flex items-center rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-slate-800 hover:border-slate-500 transition">Edit</a>}
+                  {isActive(j) && <SecondaryButton disabled={busy === j.id} onClick={() => close(j)} className="!py-2 !text-sm">Close this post</SecondaryButton>}
+                </div>
               </li>
             );
           })}
