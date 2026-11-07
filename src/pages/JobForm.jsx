@@ -8,7 +8,7 @@ import { submitJob, school } from '../lib/api';
 
 const initial = {
   school_name: '', school_type: '', contact_name: '', contact_email: '', apply_link: '',
-  title: '', city: '', district: '', job_type: '', hourly_min: '', hourly_max: '', monthly_min: '', monthly_max: '', arc_offered: '',
+  title: '', city: '', district: '', job_type: '', onsite_only: false, hourly_min: '', hourly_max: '', monthly_min: '', monthly_max: '', arc_offered: '',
   start_date: '', start_asap: false, schedule: '', description: '', requirements: '',
   consent: false, website: '',
 };
@@ -134,6 +134,7 @@ export default function JobForm() {
         pay_hourly_min: payCheck(f).hMin, pay_hourly_max: payCheck(f).hMax,
         pay_monthly_min: payCheck(f).mMin, pay_monthly_max: payCheck(f).mMax,
         arc_offered: f.arc_offered,
+        onsite_only: !!f.onsite_only,
         start_asap: f.start_asap,
         start_date: f.start_asap ? null : f.start_date || null,
         schedule: f.schedule.trim() || null,
@@ -318,6 +319,14 @@ export default function JobForm() {
           <Field label="Job type" required error={errors.job_type} group>
             <Chips options={JOB_TYPES} value={f.job_type} onChange={(v) => set('job_type', v)} />
           </Field>
+
+          <label className="flex items-start gap-3 rounded-xl border border-slate-300 bg-slate-50 p-4 cursor-pointer">
+            <input type="checkbox" className="mt-1 w-5 h-5 accent-emerald-600" checked={f.onsite_only} onChange={(e) => set('onsite_only', e.target.checked)} />
+            <span>
+              <span className="block font-bold text-slate-900">On-site teaching only (no online teaching)</span>
+              <span className="block text-sm text-slate-600">Tick this if every class is in person at your school. Teachers will see it on your job post before they apply.</span>
+            </span>
+          </label>
 
           <Field label="Pay (required)" required error={errors.salary} group
             hint="Give the lowest pay, and the highest if you want to show a range. Leave the second box empty to show “and up” (for example NT$60,000 and up). Part-time needs hourly, full-time needs monthly, and you can give both.">

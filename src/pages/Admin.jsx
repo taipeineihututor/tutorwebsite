@@ -65,6 +65,7 @@ function jobRows(j) {
     ['City', [j.city, j.district].filter(Boolean).join(' – ')],
     ['Job type', j.job_type],
     ['Pay', j.salary],
+    ['On-site only', j.onsite_only ? 'Yes (no online teaching)' : null],
     ['Sponsors ARC', yesNo(j.arc_offered)],
     ['Start date', j.start_asap ? 'ASAP' : fmtDate(j.start_date)],
     ['Hours', j.schedule],

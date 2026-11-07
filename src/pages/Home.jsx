@@ -1,6 +1,6 @@
 import React, { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Search, MapPin, Building2, Navigation, List, Map as MapIcon, Briefcase, CheckCircle2, Sparkles, ChevronDown, Mail, ExternalLink, Loader2,
+  Search, MapPin, Building2, Banknote, Users, Navigation, List, Map as MapIcon, Briefcase, CheckCircle2, Sparkles, ChevronDown, Mail, ExternalLink, Loader2,
 } from 'lucide-react';
 import { listJobs, getJobContact } from '../lib/api';
 import { CITIES, SCHOOL_TYPES, CITY_COORDS, fmtDate, mapsUrl } from '../lib/constants';
@@ -74,11 +74,18 @@ export function JobCard({ job, defaultOpen = false, sv = null }) {
         </div>
       </div>
 
-      <div className="mt-3 flex flex-wrap gap-2 text-sm text-slate-700">
+      <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-slate-700">
         <span className="inline-flex items-center gap-1.5 bg-slate-100 px-3 py-1 rounded-lg"><MapPin className="w-3.5 h-3.5 text-emerald-600" />{place}</span>
+        {job.salary && (
+          <span className="inline-flex items-center gap-1.5 bg-emerald-400 text-slate-950 border border-emerald-500 px-3.5 py-1.5 rounded-lg text-base font-black shadow-sm">
+            <Banknote className="w-4 h-4" />{job.salary}
+          </span>
+        )}
         <span className="inline-flex items-center gap-1.5 bg-slate-100 px-3 py-1 rounded-lg"><Briefcase className="w-3.5 h-3.5 text-emerald-600" />{job.job_type}</span>
         {job.school_type && <span className="inline-flex items-center gap-1.5 bg-slate-100 px-3 py-1 rounded-lg"><Building2 className="w-3.5 h-3.5 text-emerald-600" />{job.school_type}</span>}
-        {job.salary && <span className="bg-slate-100 px-3 py-1 rounded-lg font-semibold text-slate-900">{job.salary}</span>}
+        {job.onsite_only && (
+          <span className="inline-flex items-center gap-1.5 bg-slate-900 text-white px-3 py-1 rounded-lg font-bold"><Users className="w-3.5 h-3.5" />On-site only (no online teaching)</span>
+        )}
       </div>
 
       <button
