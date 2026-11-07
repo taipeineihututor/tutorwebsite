@@ -11,6 +11,7 @@ const TABS = [
   { key: 'schools', label: 'Schools' },
   { key: 'jobs', label: 'Jobs' },
   { key: 'inquiries', label: 'Messages' },
+  { key: 'logins', label: 'Logins' },
 ];
 const STATUSES = ['pending', 'approved', 'rejected'];
 const STALE_DAYS = 30;
@@ -352,7 +353,7 @@ export default function Admin() {
   const [session, setSession] = useState(undefined); // undefined = still checking
   const [tab, setTab] = useState('teachers');
   const [status, setStatus] = useState('approved');
-  const [data, setData] = useState({ teachers: [], jobs: [], inquiries: [], schools: [], views: [], reports: [] });
+  const [data, setData] = useState({ teachers: [], jobs: [], inquiries: [], schools: [], views: [], reports: [], logins: [] });
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -364,10 +365,10 @@ export default function Admin() {
     setLoading(true);
     setError('');
     try {
-      const [teachers, jobs, inquiries, schools, views, reports] = await Promise.all([
-        admin.list('teachers'), admin.list('jobs'), admin.list('inquiries'), admin.list('schools'), admin.contactViews(), admin.reports(),
+      const [teachers, jobs, inquiries, schools, views, reports, logins] = await Promise.all([
+        admin.list('teachers'), admin.list('jobs'), admin.list('inquiries'), admin.list('schools'), admin.contactViews(), admin.reports(), admin.logins().catch(() => []),
       ]);
-      setData({ teachers, jobs, inquiries, schools, views, reports });
+      setData({ teachers, jobs, inquiries, schools, views, reports, logins });
     } catch {
       setError('Could not load the data. Check that the database is set up and you are signed in as an admin.');
     } finally {
@@ -462,7 +463,9 @@ export default function Admin() {
   };
   const isStale = (r) => r.status !== 'rejected' && Date.now() - lastActive(r) >= STALE_DAYS * DAY_MS;
   const staleCount = (k) => data[k].filter(isStale).length;
-  const list = tab === 'inquiries'
+  const list = tab === 'logins'
+    ? data.logins
+    : tab === 'inquiries'
     ? data.inquiries
     : status === 'stale'
       ? data[tab].filter(isStale).sort((a, b) => lastActive(a) - lastActive(b))
@@ -482,7 +485,7 @@ export default function Admin() {
 
         <div className="flex gap-2 mb-4 overflow-x-auto">
           {TABS.filter((t) => t.key !== 'inquiries' || data.inquiries.length > 0).map((t) => {
-            const pending = t.key === 'inquiries' ? data.inquiries.length : count(t.key, 'pending');
+            const pending = t.key === 'inquiries' ? data.inquiries.length : t.key === 'logins' ? 0 : count(t.key, 'pending');
             return (
               <button key={t.key} onClick={() => { setTab(t.key); setStatus(t.key === 'schools' ? 'pending' : 'approved'); }}
                 className={`px-4 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition ${tab === t.key ? 'bg-emerald-500 text-slate-950' : 'bg-slate-900 text-slate-200 border border-slate-700'}`}>
@@ -496,7 +499,7 @@ export default function Admin() {
         </div>
 
         <Panel className="!p-4 sm:!p-6">
-          {tab !== 'inquiries' && (
+          {tab !== 'inquiries' && tab !== 'logins' && (
             <div className="flex gap-2 mb-4 flex-wrap">
               {STATUSES.map((s) => (
                 <button key={s} onClick={() => setStatus(s)}
@@ -516,12 +519,34 @@ export default function Admin() {
 
           {!loading && list.length === 0 && (
             <p className="text-slate-500 py-8 text-center">
-              {tab === 'inquiries' ? 'No messages yet.' : (status === 'stale' ? `Nothing is inactive: everything has had activity in the last ${STALE_DAYS} days.` : `Nothing ${status} right now.`)}
+              {tab === 'logins' ? 'No logins.' : tab === 'inquiries' ? 'No messages yet.' : (status === 'stale' ? `Nothing is inactive: everything has had activity in the last ${STALE_DAYS} days.` : `Nothing ${status} right now.`)}
             </p>
           )}
 
           <div className="space-y-4">
-            {tab === 'inquiries'
+            {tab === 'logins' && (
+              <p className="text-sm text-slate-500">Every sign-in account. Deleting a login removes the email and password for good; a school registration under it is deleted too. A teacher profile stays on the site until you delete it in the Teachers tab.</p>
+            )}
+            {tab === 'logins'
+              ? list.map((u) => (
+                  <article key={u.id} className="border border-slate-200 rounded-2xl p-4 text-sm flex flex-wrap items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-black text-slate-900 break-all">{u.email}</p>
+                      <p className="text-xs text-slate-500">
+                        Created {u.created_at ? new Date(u.created_at).toLocaleDateString() : '–'} · Last sign-in {u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString() : 'never'}
+                      </p>
+                      <p className="mt-1 text-slate-700">
+                        {u.is_admin ? 'Admin' : u.school ? `School: ${u.school}` : u.teacher ? `Teacher: ${u.teacher}` : <span className="text-amber-700 font-semibold">Not linked to anything (unused)</span>}
+                      </p>
+                    </div>
+                    {!u.is_admin && (
+                      <SecondaryButton disabled={busy}
+                        onClick={() => { if (window.confirm(`Delete the login ${u.email}${u.school ? ` and the school registration "${u.school}"` : ''} permanently? This cannot be undone.`)) act(() => admin.deleteLogin(u.id)); }}
+                        className="!py-2 !text-sm !text-red-700 !border-red-200 hover:!border-red-500"><Trash2 className="w-4 h-4" /> Delete login</SecondaryButton>
+                    )}
+                  </article>
+                ))
+              : tab === 'inquiries'
               ? list.map((q) => (
                   <article key={q.id} className="border border-slate-200 rounded-2xl p-4 sm:p-5 text-sm space-y-2">
                     <p className="font-black text-slate-900">

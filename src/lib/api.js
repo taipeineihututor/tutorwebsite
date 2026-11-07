@@ -355,6 +355,28 @@ export const admin = {
     return data.signedUrl;
   },
 
+  // All sign-in accounts (admin only), with what each one is linked to.
+  async logins() {
+    if (isDemo) {
+      const db = loadDb();
+      const emails = new Set([...db.schools.map((r) => r.user_id), ...db.teachers.map((r) => r.user_id)].filter(Boolean));
+      return [...emails].map((e) => ({
+        id: e, email: e, created_at: null, last_sign_in_at: null, is_admin: false,
+        school: db.schools.find((r) => r.user_id === e)?.institution_name || null,
+        teacher: db.teachers.find((r) => r.user_id === e)?.full_name || null,
+      }));
+    }
+    const { data, error } = await supabase.rpc('admin_list_logins');
+    if (error) throw error;
+    return data;
+  },
+
+  async deleteLogin(id) {
+    if (isDemo) return;
+    const { error } = await supabase.rpc('admin_delete_login', { p_user_id: id });
+    if (error) throw error;
+  },
+
   // Who looked at whose contact details (newest first).
   async contactViews() {
     if (isDemo) return [...loadDb().contact_views].sort((a, b) => (a.viewed_at < b.viewed_at ? 1 : -1));

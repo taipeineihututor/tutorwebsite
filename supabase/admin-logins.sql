@@ -1,0 +1,3 @@
+-- Admin "Logins" tab (already applied to the live project): list every sign-in account and delete unused ones.
+-- Functions: admin_list_logins(), admin_delete_login(uuid). Both refuse non-admins; admin accounts and your own login cannot be deleted.
+-- See the live definitions in the Supabase SQL editor.
