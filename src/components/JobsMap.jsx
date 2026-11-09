@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
@@ -84,9 +84,21 @@ export default function JobsMap({ points, selectedId, onSelect }) {
   const latest = useRef({ points, selectedId, onSelect });
   latest.current = { points, selectedId, onSelect };
 
+  const [failed, setFailed] = useState('');
+
   const draw = () => {
     if (!map.current) return;
-    const { points: pts, onSelect: pick } = latest.current;
+    try {
+      drawPins();
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('Map pins could not be drawn', err);
+    }
+  };
+
+  const drawPins = () => {
+    const { points: allPts, onSelect: pick } = latest.current;
+    const pts = allPts.filter((p) => Number.isFinite(p.lat) && Number.isFinite(p.lng));
     markers.current.forEach((m) => m.remove());
     markers.current = pts.map((pt) => {
       const popup = new maplibregl.Popup({ offset: [0, -34], closeButton: true, maxWidth: '260px' }).setDOMContent(popupEl(pt, pick));
@@ -100,18 +112,35 @@ export default function JobsMap({ points, selectedId, onSelect }) {
   };
 
   useEffect(() => {
-    map.current = new maplibregl.Map({ container: el.current, style: STYLE_URL, center: [120.95, 23.7], zoom: 6.3, attributionControl: { compact: true } });
-    map.current.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-left');
-    map.current.scrollZoom.disable(); // so scrolling the page does not get stuck on the map
-    map.current.on('load', () => {
-      prepareStyle(map.current);
-      ready.current = true;
-      draw();
-    });
+    try {
+      // Some phones and browsers switch off WebGL (battery saver, hardware acceleration off): show a message instead of a blank page.
+      const probe = document.createElement('canvas');
+      if (!(probe.getContext('webgl2') || probe.getContext('webgl'))) {
+        setFailed('Your browser has switched off the graphics the map needs.');
+        return undefined;
+      }
+      map.current = new maplibregl.Map({ container: el.current, style: STYLE_URL, center: [120.95, 23.7], zoom: 6.3, attributionControl: { compact: true } });
+      map.current.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-left');
+      map.current.scrollZoom.disable(); // so scrolling the page does not get stuck on the map
+      map.current.on('load', () => {
+        try { prepareStyle(map.current); } catch { /* the map still works without English names or the MRT highlight */ }
+        ready.current = true;
+        draw();
+      });
+      map.current.on('error', (e) => {
+        // Tile or style download problems (a bad connection) are not fatal: only a missing style is.
+        if (!ready.current && e?.error && /style|Failed to fetch|NetworkError/i.test(String(e.error.message || e.error))) setFailed('The map could not be downloaded. Please check your connection and reload.');
+      });
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('Map could not start', err);
+      setFailed('The map could not start on this device.');
+      return undefined;
+    }
     return () => {
       markers.current.forEach((m) => m.remove());
       markers.current = [];
-      map.current.remove();
+      if (map.current) { try { map.current.remove(); } catch { /* ignore */ } }
       map.current = null;
       ready.current = false;
     };
@@ -121,5 +150,13 @@ export default function JobsMap({ points, selectedId, onSelect }) {
     if (ready.current) draw();
   }, [points, selectedId, onSelect]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  if (failed) {
+    return (
+      <div className="h-[220px] w-full rounded-2xl border border-slate-200 bg-slate-50 flex flex-col items-center justify-center text-center px-6" role="alert">
+        <p className="font-black text-slate-900">The map is not available right now.</p>
+        <p className="text-sm text-slate-600 mt-1 max-w-md">{failed} You can still see every job in the list view.</p>
+      </div>
+    );
+  }
   return <div ref={el} className="h-[420px] sm:h-[520px] w-full rounded-2xl overflow-hidden border border-slate-200 z-0" role="region" aria-label="Map of schools hiring" />;
 }
